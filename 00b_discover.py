@@ -32,7 +32,14 @@ GROUP_REMAP = {
 
 
 def scan_adni_directory(adni_dir=None):
-    """Scan one ADNI subject directory and return its rsfMRI scan metadata."""
+    """Scan one ADNI subject directory for its rsfMRI series.
+
+    Args:
+        adni_dir: Path to the subject's ADNI folder.
+
+    Returns:
+        Dict with the discovered scan info, or None if no rsfMRI is found.
+    """
     if adni_dir is None:
         adni_dir = config.DICOM_DIR
 
@@ -88,7 +95,15 @@ def load_labels_from_csv():
 
 
 def detect_protocol(subject_id, adni_dir=None):
-    """Infer the acquisition protocol (Standard vs Multiband) from a series name."""
+    """Infer the acquisition protocol from the series name.
+
+    Args:
+        subject_id: ADNI subject identifier.
+        adni_dir: Path to the subject's ADNI folder.
+
+    Returns:
+        'Standard' or 'Multiband'.
+    """
     if adni_dir is None:
         adni_dir = config.DICOM_DIR
 
@@ -175,7 +190,14 @@ def detect_protocol(subject_id, adni_dir=None):
 
 
 def discover_all(adni_dir=None):
-    """Discover every subject, protocol and label from disk and the CSV tables."""
+    """Discover every subject, protocol and label from disk and the CSV tables.
+
+    Args:
+        adni_dir: Root directory holding the per-subject ADNI folders.
+
+    Returns:
+        Dict with subject lists keyed by protocol plus label/metadata maps.
+    """
     if adni_dir is not None:
         subject_to_dir = {
             s: adni_dir for s in scan_adni_directory(adni_dir)
@@ -235,7 +257,14 @@ def discover_all(adni_dir=None):
 
 
 def update_config(discovery_result=None):
-    """Update the in-memory config subject lists with the discovered subjects."""
+    """Write the discovered subject lists into the in-memory config module.
+
+    Args:
+        discovery_result: Output of discover_all().
+
+    Returns:
+        None; mutates the config module in place.
+    """
     if discovery_result is None:
         discovery_result = discover_all()
 
@@ -252,7 +281,14 @@ def update_config(discovery_result=None):
 
 
 def build_subjects_list(discovery_result=None):
-    """Build the list of subject dicts (id, path, group, protocol)."""
+    """Build the list of subject dicts from a discovery result.
+
+    Args:
+        discovery_result: Output of discover_all().
+
+    Returns:
+        List of dicts with id, path, group and protocol.
+    """
     if discovery_result is None:
         discovery_result = discover_all()
 

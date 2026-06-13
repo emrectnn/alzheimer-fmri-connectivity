@@ -65,7 +65,14 @@ _build_models_optuna = _models._build_models_optuna
 
 
 def experiment_3class(df):
-    """Legacy 3-class experiment over the default feature sets."""
+    """Legacy 3-class experiment over the default feature sets.
+
+    Args:
+        df: Merged feature DataFrame.
+
+    Returns:
+        Result DataFrame ranked by AUC.
+    """
     print("DENEY 1: 3-SINIF (HC vs MCI vs AD)")
 
     feat_sets = get_feature_sets(df)
@@ -79,17 +86,26 @@ def experiment_3class(df):
             continue
 
         models = {
-            'SVM_RBF':   make_imb_pipeline(SVC(kernel='rbf', C=1, probability=True, random_state=42)),
-            'SVM_RBF_C10': make_imb_pipeline(SVC(kernel='rbf', C=10, probability=True, random_state=42)),
+            'SVM_RBF': make_imb_pipeline(
+                SVC(kernel='rbf', C=1, probability=True, random_state=42)),
+            'SVM_RBF_C10': make_imb_pipeline(
+                SVC(kernel='rbf', C=10, probability=True, random_state=42)),
             'RF':        make_imb_pipeline(RandomForestClassifier(200, random_state=42)),
-            'GBM':       make_imb_pipeline(GradientBoostingClassifier(n_estimators=100, random_state=42)),
+            'GBM': make_imb_pipeline(
+                GradientBoostingClassifier(n_estimators=100, random_state=42)),
             'LogReg':    make_imb_pipeline(LogisticRegression(C=1, max_iter=2000, random_state=42)),
             'ElasticNet': make_imb_pipeline(LogisticRegression(
                 penalty='elasticnet', l1_ratio=0.5, C=1.0, solver='saga',
                 max_iter=5000, random_state=42)),
-            'PCA20+SVM': make_imb_pipeline(SVC(kernel='rbf', C=10, probability=True, random_state=42), n_pca=min(20, X.shape[1]-1)),
-            'Top15+SVM': make_imb_pipeline(SVC(kernel='rbf', C=10, probability=True, random_state=42), k_best=min(15, X.shape[1])),
-            'Top15+RF':  make_imb_pipeline(RandomForestClassifier(200, random_state=42), k_best=min(15, X.shape[1])),
+            'PCA20+SVM': make_imb_pipeline(
+                SVC(kernel='rbf', C=10, probability=True, random_state=42),
+                n_pca=min(20, X.shape[1] - 1)),
+            'Top15+SVM': make_imb_pipeline(
+                SVC(kernel='rbf', C=10, probability=True, random_state=42),
+                k_best=min(15, X.shape[1])),
+            'Top15+RF': make_imb_pipeline(
+                RandomForestClassifier(200, random_state=42),
+                k_best=min(15, X.shape[1])),
         }
 
         if HAS_XGB:
@@ -115,17 +131,32 @@ def experiment_3class(df):
                 pass
 
     res_df = pd.DataFrame(results).sort_values('AUC', ascending=False)
-    print(res_df[['Features','Model','n_feat','Acc','AUC','F1','Train_Acc']].head(15).to_string(index=False))
+    cols = ['Features', 'Model', 'n_feat', 'Acc', 'AUC', 'F1', 'Train_Acc']
+    print(res_df[cols].head(15).to_string(index=False))
     return res_df
 
 
 def experiment_3class_by_mode(df, mode, residualize=False,
                               time_series_lookup=None, use_combat=False,
                               use_optuna=False, n_repeats=None):
-    """Run the 3-class experiment for one feature mode."""
+    """Run the 3-class experiment for one feature mode.
+
+    Args:
+        df: Merged feature DataFrame.
+        mode: Active feature mode.
+        residualize: Regress out confounds in-fold when True.
+        time_series_lookup: id-to-array map for tangent features.
+        use_combat: Apply ComBat harmonization when True.
+        use_optuna: Tune hyperparameters with Optuna when True.
+        n_repeats: CV repeats.
+
+    Returns:
+        Result DataFrame for this mode.
+    """
     banner = {
         'imaging_only': "IMAGING-ONLY (leakage-siz, gercek bilimsel sonuc)",
-        'imaging_plus_demographics': "IMAGING + YAS/CINSIYET/EGITIM (konfound kontrol, leakage yok)",
+        'imaging_plus_demographics':
+            "IMAGING + YAS/CINSIYET/EGITIM (konfound kontrol, leakage yok)",
         'imaging_plus_clinical': "IMAGING + MMSE/CDR (DIKKAT: TARGET LEAKAGE, upper-bound)",
     }[mode]
     print(f"DENEY 1 - 3-SINIF [{mode}]{' (residualize)' if residualize else ''}")
@@ -210,7 +241,22 @@ def experiment_3class_by_mode(df, mode, residualize=False,
 def _run_tangent_experiment(df, y, time_series_lookup, mode,
                             task='3class', pair=None, n_repeats=None,
                             use_nbs=False, feature_set_name=None):
-    """Run the tangent-space (and NBS) feature experiments for one task."""
+    """Run the tangent-space (and NBS) experiments for one task.
+
+    Args:
+        df: Feature DataFrame.
+        y: Labels.
+        time_series_lookup: id-to-array map.
+        mode: Active feature mode.
+        task: Task name.
+        pair: Group pair for binary tasks (None for 3-class).
+        n_repeats: CV repeats.
+        use_nbs: Include the NBS variant when True.
+        feature_set_name: Label for the produced rows.
+
+    Returns:
+        List of result rows.
+    """
     rows = []
     subject_ids = df['subject_id'].astype(str).values
     mask = np.array([sid in time_series_lookup for sid in subject_ids])
@@ -286,7 +332,21 @@ def _run_tangent_experiment(df, y, time_series_lookup, mode,
 def experiment_binary_by_mode(df, mode, pair, residualize=False,
                               time_series_lookup=None, use_combat=False,
                               use_optuna=False, n_repeats=None):
-    """Run a binary (pairwise) experiment for one feature mode."""
+    """Run a binary (pairwise) experiment for one feature mode.
+
+    Args:
+        df: Merged feature DataFrame.
+        mode: Active feature mode.
+        pair: Group pair, e.g. ('HC', 'AD').
+        residualize: Regress out confounds in-fold when True.
+        time_series_lookup: id-to-array map for tangent features.
+        use_combat: Apply ComBat harmonization when True.
+        use_optuna: Tune hyperparameters with Optuna when True.
+        n_repeats: CV repeats.
+
+    Returns:
+        Result DataFrame for this pair and mode.
+    """
     assert len(pair) == 2 and pair[0] != pair[1], "pair iki farkli sinif olmali"
     task_label = f"{pair[0]}-{pair[1]}"
     banner = {
@@ -393,13 +453,27 @@ def experiment_binary_by_mode(df, mode, pair, residualize=False,
 
 
 def experiment_binary_hcad(df):
-    """Convenience wrapper for the HC-vs-AD binary experiment."""
+    """Convenience wrapper for the HC-vs-AD binary experiment.
+
+    Args:
+        df: Merged feature DataFrame.
+
+    Returns:
+        Result DataFrame for HC vs AD.
+    """
     return experiment_binary_by_mode(df, mode='imaging_only',
                                      pair=('HC', 'AD'), residualize=False)
 
 
 def experiment_twostage(df):
-    """Legacy two-stage (hierarchical) 3-class experiment."""
+    """Legacy two-stage (hierarchical) 3-class experiment.
+
+    Args:
+        df: Merged feature DataFrame.
+
+    Returns:
+        Result DataFrame.
+    """
     print("DENEY 3: 2-ASAMALI (HC vs Hasta -> MCI vs AD)")
 
     feat_sets = get_feature_sets(df)
@@ -450,8 +524,10 @@ def experiment_twostage(df):
             combined_accs.append(np.nan)
 
     print(f"  Stage 1 (HC vs Sick): Acc = {np.mean(stage1_accs):.3f} +/- {np.std(stage1_accs):.3f}")
-    print(f"  Stage 2 (MCI vs AD):  Acc = {np.nanmean(stage2_accs):.3f} +/- {np.nanstd(stage2_accs):.3f}")
-    print(f"  Combined 3-class:     Acc = {np.nanmean(combined_accs):.3f} +/- {np.nanstd(combined_accs):.3f}")
+    print(f"  Stage 2 (MCI vs AD):  Acc = {np.nanmean(stage2_accs):.3f} "
+          f"+/- {np.nanstd(stage2_accs):.3f}")
+    print(f"  Combined 3-class:     Acc = {np.nanmean(combined_accs):.3f} "
+          f"+/- {np.nanstd(combined_accs):.3f}")
 
     return {
         'stage1': np.mean(stage1_accs),
@@ -463,7 +539,21 @@ def experiment_twostage(df):
 def experiment_twostage_by_mode(df, mode, residualize=False, use_combat=False,
                                 n_splits=5, n_repeats=10, random_state=42,
                                 calibrate=True):
-    """Two-stage HC-vs-impaired then MCI-vs-AD experiment for one mode."""
+    """Two-stage HC-vs-impaired then MCI-vs-AD experiment.
+
+    Args:
+        df: Merged feature DataFrame.
+        mode: Active feature mode.
+        residualize: Regress out confounds in-fold when True.
+        use_combat: Apply ComBat harmonization when True.
+        n_splits: Folds per repeat.
+        n_repeats: CV repeats.
+        random_state: Seed for reproducibility.
+        calibrate: Apply probability calibration when True.
+
+    Returns:
+        Result DataFrame for the two-stage classifier.
+    """
     feat_map = get_feature_sets_by_mode(df, mode)
     y = df['label'].values
     groups = df['group'].values
@@ -514,7 +604,8 @@ def experiment_twostage_by_mode(df, mode, residualize=False, use_combat=False,
                                    learning_rate=0.05, random_state=42, verbose=-1)
                     if HAS_LGBM else
                     SVC(kernel='rbf', C=10, probability=True, random_state=42),
-                    k_best=(MAX_FEATURES_HARD_LIMIT if X.shape[1] > MAX_FEATURES_HARD_LIMIT else None),
+                    k_best=(MAX_FEATURES_HARD_LIMIT
+                            if X.shape[1] > MAX_FEATURES_HARD_LIMIT else None),
                     smote_k_neighbors=2,
                     n_confounds=n_conf, n_site_cols=n_site, n_bio_cols=n_bio,
                 )
@@ -570,7 +661,14 @@ def experiment_twostage_by_mode(df, mode, residualize=False, use_combat=False,
 
 
 def experiment_gridsearch(df):
-    """Small grid-search experiment kept for reference."""
+    """Small grid-search experiment kept for reference.
+
+    Args:
+        df: Merged feature DataFrame.
+
+    Returns:
+        Result DataFrame.
+    """
     print("DENEY 4: GRID SEARCH (SVM + RF en iyi parametreler)")
 
     img_sets = get_feature_sets_by_mode(df, 'imaging_only')
@@ -609,7 +707,9 @@ def experiment_gridsearch(df):
         except Exception:
             aucs.append(np.nan)
 
-    print(f"  Nested CV SVM (GridSearch, CV-safe): Acc={np.mean(accs):.3f}+/-{np.std(accs):.3f}, AUC={np.nanmean(aucs):.3f}+/-{np.nanstd(aucs):.3f}")
+    print(f"  Nested CV SVM (GridSearch, CV-safe): "
+          f"Acc={np.mean(accs):.3f}+/-{np.std(accs):.3f}, "
+          f"AUC={np.nanmean(aucs):.3f}+/-{np.nanstd(aucs):.3f}")
     print(f"  Son fold'daki en iyi parametreler: {svm_gs.best_params_}")
 
     return {'acc': np.mean(accs), 'auc': np.nanmean(aucs)}

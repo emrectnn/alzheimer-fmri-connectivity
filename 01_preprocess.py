@@ -24,7 +24,14 @@ config = import_module("00a_config")
 
 
 def load_atlas(atlas_name=None):
-    """Load the parcellation atlas maps and region labels."""
+    """Load the parcellation atlas maps and region labels.
+
+    Args:
+        atlas_name: Optional atlas key; defaults to the configured atlas.
+
+    Returns:
+        Tuple (atlas_maps, labels).
+    """
     if atlas_name is None:
         atlas_name = config.ATLAS_NAME
 
@@ -39,7 +46,15 @@ def load_atlas(atlas_name=None):
 
 
 def create_masker(atlas_maps, tr=None):
-    """Create a NiftiLabelsMasker that extracts mean ROI time series."""
+    """Create a NiftiLabelsMasker that extracts mean ROI time series.
+
+    Args:
+        atlas_maps: Labelled atlas image.
+        tr: Repetition time in seconds.
+
+    Returns:
+        A configured NiftiLabelsMasker.
+    """
     if tr is None:
         tr = config.TR
 
@@ -58,7 +73,15 @@ def create_masker(atlas_maps, tr=None):
 
 
 def load_confounds(fmri_path, n_skip=None):
-    """Build the 24-parameter Friston confound matrix for a scan."""
+    """Build the 24-parameter Friston confound matrix for a scan.
+
+    Args:
+        fmri_path: Path to the subject's NIfTI.
+        n_skip: Number of initial volumes to drop.
+
+    Returns:
+        Confound array of shape (n_volumes, n_confounds).
+    """
     if n_skip is None:
         n_skip = config.FIRST_N_VOLUMES
 
@@ -89,7 +112,17 @@ def load_confounds(fmri_path, n_skip=None):
 
 def check_motion(fmri_path, n_skip=None, fd_threshold=0.5,
                  max_fd_percent=0.20):
-    """Compute framewise displacement and flag high-motion scans."""
+    """Compute framewise displacement and flag high-motion scans.
+
+    Args:
+        fmri_path: Path to the subject's NIfTI.
+        n_skip: Number of initial volumes to drop.
+        fd_threshold: Per-volume FD threshold (mm).
+        max_fd_percent: Max fraction of high-FD volumes before rejection.
+
+    Returns:
+        Dict with mean FD, flagged-volume fraction and a pass/fail flag.
+    """
     if n_skip is None:
         n_skip = config.FIRST_N_VOLUMES
 
@@ -122,7 +155,17 @@ def check_motion(fmri_path, n_skip=None, fd_threshold=0.5,
 
 
 def preprocess_subject(fmri_path, masker, n_skip=None, check_quality=True):
-    """Preprocess one scan and return its ROI time series and QC info."""
+    """Preprocess one scan and return its ROI time series and QC info.
+
+    Args:
+        fmri_path: Path to the subject's NIfTI.
+        masker: Fitted/parameterized NiftiLabelsMasker.
+        n_skip: Number of initial volumes to drop.
+        check_quality: Whether to run the motion QC step.
+
+    Returns:
+        Tuple (time_series, info_dict).
+    """
     if n_skip is None:
         n_skip = config.FIRST_N_VOLUMES
 
@@ -172,7 +215,16 @@ def preprocess_subject(fmri_path, masker, n_skip=None, check_quality=True):
 
 
 def quality_check(time_series, subject_id, save_dir=None):
-    """Render a per-subject QC figure (time series, motion, connectivity)."""
+    """Render a per-subject QC figure (signals, motion, connectivity).
+
+    Args:
+        time_series: (n_timepoints, n_roi) ROI time series.
+        subject_id: Identifier used in the figure title/filename.
+        save_dir: Optional output directory.
+
+    Returns:
+        None; writes a PNG figure.
+    """
     if save_dir is None:
         save_dir = config.FIGURES_DIR
 
@@ -233,7 +285,16 @@ def quality_check(time_series, subject_id, save_dir=None):
 
 
 def preprocess_all(subjects, save_dir=None, skip_existing=True):
-    """Preprocess every subject and save ROI time series to disk."""
+    """Preprocess every subject and save ROI time series to disk.
+
+    Args:
+        subjects: List of subject dicts.
+        save_dir: Optional output directory.
+        skip_existing: Reuse already-processed subjects when True.
+
+    Returns:
+        The subject list updated with timeseries_path entries.
+    """
     if save_dir is None:
         save_dir = config.PREPROCESSED_DIR
 

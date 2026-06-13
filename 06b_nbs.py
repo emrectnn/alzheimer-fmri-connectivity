@@ -23,7 +23,15 @@ def mat_to_vec(mat: np.ndarray) -> np.ndarray:
 
 
 def compute_edge_tstats(X: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Two-sample t-statistic per edge (group 1 vs group 0)."""
+    """Two-sample t-statistic per edge (group 1 vs group 0).
+
+    Args:
+        X: (n_samples, n_edges) FC vectors.
+        y: (n_samples,) binary labels.
+
+    Returns:
+        (n_edges,) array of t-statistics.
+    """
     X0 = X[y == 0]
     X1 = X[y == 1]
     t, _ = stats.ttest_ind(X1, X0, axis=0, equal_var=False)
@@ -31,7 +39,15 @@ def compute_edge_tstats(X: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 def connected_components_from_edges(edge_mask: np.ndarray, n_roi: int) -> list[set]:
-    """Group suprathreshold edges into connected components (union-find)."""
+    """Group suprathreshold edges into connected components.
+
+    Args:
+        edge_mask: (n_edges,) boolean upper-triangle mask.
+        n_roi: Number of ROIs/nodes.
+
+    Returns:
+        List of components, each a set of edge indices.
+    """
     iu = np.triu_indices(n_roi, k=1)
     edge_list = [(iu[0][i], iu[1][i]) for i in range(len(edge_mask)) if edge_mask[i]]
     parent = list(range(n_roi))
@@ -64,7 +80,6 @@ def connected_components_from_edges(edge_mask: np.ndarray, n_roi: int) -> list[s
 
 
 class NBSEdgeSelector(BaseEstimator, TransformerMixin):
-
     """CV-safe Network-Based Statistic edge selector (scikit-learn transformer)."""
     def __init__(self, n_roi: int = 166, thresh: float = 3.1,
                  n_perm: int = 500, alpha: float = 0.05,
@@ -78,7 +93,15 @@ class NBSEdgeSelector(BaseEstimator, TransformerMixin):
         self.fallback_topk = fallback_topk
 
     def fit(self, X: np.ndarray, y: np.ndarray):
-        """Learn the significant-edge mask on the training fold."""
+        """Learn the significant-edge mask on the training fold.
+
+        Args:
+            X: (n_samples, n_edges) FC vectors.
+            y: (n_samples,) binary labels.
+
+        Returns:
+            self.
+        """
         y = np.asarray(y).ravel()
         if len(np.unique(y)) < 2:
             self.mask_ = np.ones(X.shape[1], dtype=bool)
@@ -130,7 +153,14 @@ class NBSEdgeSelector(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: np.ndarray) -> np.ndarray:
-        """Keep only the selected edge columns."""
+        """Keep only the selected edge columns.
+
+        Args:
+            X: (n_samples, n_edges) FC vectors.
+
+        Returns:
+            (n_samples, n_selected) reduced matrix.
+        """
         if not hasattr(self, 'mask_'):
             raise RuntimeError("NBSEdgeSelector: fit cagir once")
         return X[:, self.mask_]

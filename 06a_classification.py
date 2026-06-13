@@ -24,7 +24,18 @@ config = import_module("00a_config")
 def build_feature_matrix(global_metrics_df, nodal_metrics_list,
                           null_model_df=None, dynamic_df=None,
                           use_nodal=True):
-    """Assemble the feature matrix from graph, nodal, and null-model features."""
+    """Assemble the feature matrix from graph, nodal and null-model features.
+
+    Args:
+        global_metrics_df: Per-subject global graph metrics.
+        nodal_metrics_list: Per-subject nodal metric dicts.
+        null_model_df: Optional null-model deviation features.
+        dynamic_df: Optional dynamic-FC features.
+        use_nodal: Include nodal features when True.
+
+    Returns:
+        Tuple (X, y, feature_names).
+    """
     subjects = global_metrics_df["subject_id"].values
     y = global_metrics_df["label"].values
     groups = global_metrics_df["group"].values
@@ -153,7 +164,16 @@ def get_models():
 
 
 def cross_validate_all(X, y, n_splits=None):
-    """Cross-validate every model and return performance scores."""
+    """Cross-validate every candidate model and collect scores.
+
+    Args:
+        X: Feature matrix.
+        y: Labels.
+        n_splits: Number of CV folds.
+
+    Returns:
+        Dict mapping model name to its score summary.
+    """
     if n_splits is None:
         n_splits = config.N_FOLDS
 
@@ -200,7 +220,17 @@ def cross_validate_all(X, y, n_splits=None):
 
 
 def feature_importance_analysis(X, y, feature_names, top_n=20):
-    """Rank features by a random-forest importance estimate."""
+    """Rank features by a random-forest importance estimate.
+
+    Args:
+        X: Feature matrix.
+        y: Labels.
+        feature_names: Names aligned with X columns.
+        top_n: Number of top features to return.
+
+    Returns:
+        Ranked list/table of the most important features.
+    """
     rf = RandomForestClassifier(
         n_estimators=500, random_state=config.RANDOM_STATE
     )
@@ -224,7 +254,17 @@ def feature_importance_analysis(X, y, feature_names, top_n=20):
 
 def run_classification(global_metrics_df, nodal_metrics_list,
                         null_model_df=None, dynamic_df=None):
-    """Run the baseline classification pipeline end to end."""
+    """Run the baseline classification pipeline end to end.
+
+    Args:
+        global_metrics_df: Per-subject global graph metrics.
+        nodal_metrics_list: Per-subject nodal metric dicts.
+        null_model_df: Optional null-model deviation features.
+        dynamic_df: Optional dynamic-FC features.
+
+    Returns:
+        Tuple (cv_results, X, y, feature_names).
+    """
     print("SINIFLANDIRMA PIPELINE")
 
     X, y, groups, feature_names = build_feature_matrix(

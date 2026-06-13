@@ -87,7 +87,14 @@ def run_demo():
 
 
 def run_full_pipeline(convert_only=False):
-    """Run the full ADNI pipeline from DICOM conversion to classification."""
+    """Run the full ADNI pipeline from DICOM conversion to classification.
+
+    Args:
+        convert_only: Stop after the DICOM-to-NIfTI step when True.
+
+    Returns:
+        None.
+    """
     from importlib import import_module
     config = import_module("00a_config")
     dicom2nifti = import_module("00c_dicom2nifti")

@@ -74,7 +74,16 @@ experiment_twostage_by_mode = _exp.experiment_twostage_by_mode
 
 
 def plot_results(res_3class, res_binary, output_dir):
-    """Plot the 3-class and binary result summaries to PNG."""
+    """Plot the 3-class and binary result summaries to PNG.
+
+    Args:
+        res_3class: 3-class result DataFrame.
+        res_binary: Binary result DataFrame.
+        output_dir: Directory for the figure.
+
+    Returns:
+        None; writes a PNG.
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     fig, axes = plt.subplots(1, 2, figsize=(16, 7))
@@ -88,7 +97,9 @@ def plot_results(res_3class, res_binary, output_dir):
         color=colors, edgecolor='gray', linewidth=0.5
     )
     ax.set_yticks(range(len(top15)))
-    ax.set_yticklabels([f"{r['Features'][:12]}\n{r['Model']}" for _, r in top15.iterrows()], fontsize=8)
+    ax.set_yticklabels(
+        [f"{r['Features'][:12]}\n{r['Model']}" for _, r in top15.iterrows()],
+        fontsize=8)
     ax.axvline(x=0.5, color='red', linestyle='--', alpha=0.7, label='Sanslilik (0.5)')
     ax.axvline(x=0.33, color='orange', linestyle=':', alpha=0.7, label='Rastgele')
     ax.set_xlabel('AUC (weighted OvR)')
@@ -105,7 +116,9 @@ def plot_results(res_3class, res_binary, output_dir):
         color=colors2, edgecolor='gray', linewidth=0.5
     )
     ax2.set_yticks(range(len(top15b)))
-    ax2.set_yticklabels([f"{r['Features'][:12]}\n{r['Model']}" for _, r in top15b.iterrows()], fontsize=8)
+    ax2.set_yticklabels(
+        [f"{r['Features'][:12]}\n{r['Model']}" for _, r in top15b.iterrows()],
+        fontsize=8)
     ax2.axvline(x=0.5, color='red', linestyle='--', alpha=0.7, label='Sanslilik (0.5)')
     ax2.set_xlabel('AUC (binary HC vs AD)')
     ax2.set_title('Binary HC vs AD - AUC Karsilastirmasi\n(Ust 15 kombinasyon)')
@@ -120,7 +133,15 @@ def plot_results(res_3class, res_binary, output_dir):
 
 
 def plot_confusion_matrix(df, output_dir):
-    """Render and save a confusion-matrix figure."""
+    """Render and save a confusion-matrix figure.
+
+    Args:
+        df: Feature DataFrame.
+        output_dir: Directory for the figure.
+
+    Returns:
+        None; writes a PNG.
+    """
     img_sets = get_feature_sets_by_mode(df, 'imaging_only')
     cols = img_sets.get('Graf_AUC+Null', img_sets['Graf_AUC'])
     X = df[cols].values
@@ -157,7 +178,16 @@ def _slug(task, mode, residualize, variant=None):
 
 
 def build_leaderboard(results_dict, out_dir, variant=None):
-    """Aggregate sweep results into a ranked leaderboard table."""
+    """Aggregate sweep results into a ranked leaderboard table.
+
+    Args:
+        results_dict: Mapping of (task, mode, residualize) to result frames.
+        out_dir: Output directory for the CSV/Markdown.
+        variant: Optional tag (e.g. 'fixed' or 'optuna').
+
+    Returns:
+        The leaderboard DataFrame.
+    """
     rows = []
     for (task, mode, resid), df_res in results_dict.items():
         if df_res is None or df_res.empty:
@@ -214,7 +244,9 @@ def build_leaderboard(results_dict, out_dir, variant=None):
     for task_lbl, g in lb.groupby('Task'):
         md_lines.append(f"## {task_lbl}")
         md_lines.append("")
-        md_lines.append("| Mode | Residualized | ComBat | Optuna | Features | Model | n_feat | Acc | AUC [95% CI] | F1 | Train_Acc | Leakage |")
+        md_lines.append(
+            "| Mode | Residualized | ComBat | Optuna | Features | Model | "
+            "n_feat | Acc | AUC [95% CI] | F1 | Train_Acc | Leakage |")
         md_lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
         g_sorted = g.sort_values(['Leakage_Flag', 'Mode', 'Residualized'])
         for _, r in g_sorted.iterrows():
@@ -244,7 +276,22 @@ def build_leaderboard(results_dict, out_dir, variant=None):
 
 def _run_sweep_pass(df, ts_lookup, tasks, modes, sweep_dir,
                     use_combat, use_optuna, n_repeats, tag):
-    """Run one full sweep pass (all tasks x modes) and collect results."""
+    """Run one full sweep pass (all tasks x modes) and collect results.
+
+    Args:
+        df: Merged feature DataFrame.
+        ts_lookup: id-to-array map for tangent features.
+        tasks: Tasks to run.
+        modes: Feature modes to run.
+        sweep_dir: Directory for per-slice CSVs.
+        use_combat: Apply ComBat when True.
+        use_optuna: Tune with Optuna when True.
+        n_repeats: CV repeats.
+        tag: Variant tag for output names.
+
+    Returns:
+        Dict of result frames keyed by (task, mode, residualize).
+    """
     print(f"  Pass: {tag} | ComBat={use_combat} | Optuna={use_optuna}"
           f" | n_repeats={n_repeats}")
     results = {}
@@ -283,7 +330,17 @@ def _run_sweep_pass(df, ts_lookup, tasks, modes, sweep_dir,
 
 
 def _write_comparison(lb_fixed, lb_optuna, out_dir, baseline_ref=None):
-    """Write the fixed-vs-tuned leaderboard comparison table."""
+    """Write the fixed-vs-tuned leaderboard comparison table.
+
+    Args:
+        lb_fixed: Leaderboard from the fixed-hyperparameter pass.
+        lb_optuna: Leaderboard from the Optuna pass.
+        out_dir: Output directory.
+        baseline_ref: Optional earlier leaderboard for a delta column.
+
+    Returns:
+        None; writes a Markdown table.
+    """
     md_path = os.path.join(out_dir, "leaderboard_comparison.md")
     merged = lb_fixed.rename(columns={
         'AUC': 'AUC_S3_fixed',

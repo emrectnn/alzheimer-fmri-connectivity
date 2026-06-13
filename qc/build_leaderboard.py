@@ -42,7 +42,14 @@ def _safe_str_task(t) -> str:
 
 
 def build_headline(sweep_df: pd.DataFrame) -> pd.DataFrame:
-    """Best-AUC row per (task, mode)."""
+    """Best-AUC row per (task, mode).
+
+    Args:
+        sweep_df: Concatenated sweep results.
+
+    Returns:
+        DataFrame with the winning row per task/mode.
+    """
     if sweep_df.empty:
         return pd.DataFrame()
     cols_req = ['Task', 'Mode', 'Features', 'Model', 'AUC']
@@ -61,7 +68,14 @@ def build_headline(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_alff_reho_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
-    """ALFF/ReHo ablation table: base graph vs augmented feature sets."""
+    """ALFF/ReHo ablation: base graph vs augmented feature sets.
+
+    Args:
+        sweep_df: Concatenated sweep results.
+
+    Returns:
+        Pivoted DataFrame of AUC per feature set.
+    """
     if sweep_df.empty or 'Features' not in sweep_df.columns:
         return pd.DataFrame()
     targets = ['Graf_Tam', 'Graf_Tam+ALFF', 'Graf_Tam+ReHo', 'Graf_Tam+ALFF+ReHo',
@@ -78,7 +92,14 @@ def build_alff_reho_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_nbs_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
-    """Tangent_FC vs NBS_Edges comparison table."""
+    """Tangent_FC vs NBS_Edges comparison.
+
+    Args:
+        sweep_df: Concatenated sweep results.
+
+    Returns:
+        Pivoted DataFrame with a Delta column.
+    """
     if sweep_df.empty:
         return pd.DataFrame()
     d = sweep_df[sweep_df['Features'].isin(['Tangent_FC', 'NBS_Edges'])].copy()
@@ -95,7 +116,14 @@ def build_nbs_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_twostage_comparison(sweep_df: pd.DataFrame) -> pd.DataFrame:
-    """Flat vs two-stage 3-class AUC comparison."""
+    """Flat vs two-stage 3-class AUC comparison.
+
+    Args:
+        sweep_df: Concatenated sweep results.
+
+    Returns:
+        Pivoted DataFrame with a Delta column.
+    """
     if sweep_df.empty:
         return pd.DataFrame()
     d = sweep_df[sweep_df['Task'].isin(['3class', '3class_twostage'])].copy()

@@ -75,7 +75,14 @@ def load_all_features():
 
 
 def get_feature_sets(df):
-    """Return the raw feature-set definitions keyed by name."""
+    """Return the raw feature-set definitions keyed by name.
+
+    Args:
+        df: Merged feature DataFrame.
+
+    Returns:
+        Dict mapping feature-set name to its column list.
+    """
     graph_cols = [c for c in df.columns if c not in
                   ['subject_id','label','group','n_nodes','n_nodes_lc',
                    'n_edges','density','C_rand','L_rand','auc_n_nodes',
@@ -108,7 +115,16 @@ def get_feature_sets(df):
 
 
 def get_feature_sets_by_mode(df, mode):
-    """Return feature-set definitions for a given mode (imaging / +demographics / +clinical)."""
+    """Return feature sets for a mode (imaging / +demographics / +clinical).
+
+    Args:
+        df: Merged feature DataFrame.
+        mode: One of 'imaging_only', 'imaging_plus_demographics',
+            'imaging_plus_clinical'.
+
+    Returns:
+        Dict mapping feature-set name to its column list for that mode.
+    """
     base = get_feature_sets(df)
     graph_only = base['Graf_Tam']
     auc_only = base['Graf_AUC']
@@ -173,7 +189,18 @@ def get_feature_sets_by_mode(df, mode):
 
 
 def _prepare_feature_matrix(df, cols, residualize, mode, use_combat=False):
-    """Assemble X with optional confound and ComBat site columns appended."""
+    """Assemble X with optional confound and ComBat site columns appended.
+
+    Args:
+        df: Feature DataFrame.
+        cols: Imaging feature columns to use.
+        residualize: Append confound columns for in-fold residualization.
+        mode: Active feature mode.
+        use_combat: Append a site column for ComBat when True.
+
+    Returns:
+        Tuple (X, n_confounds, n_bio_cols, n_site_cols).
+    """
     X_feat = df[cols].values.astype(float)
     n_conf = 0
     n_bio = 0

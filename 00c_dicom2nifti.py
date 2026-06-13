@@ -30,7 +30,14 @@ def check_dcm2niix():
 
 
 def find_rsfmri_dicom_dir(subject_id):
-    """Locate a subject's resting-state fMRI DICOM folder."""
+    """Locate a subject's resting-state fMRI DICOM folder.
+
+    Args:
+        subject_id: ADNI subject identifier.
+
+    Returns:
+        Path to the DICOM folder, or None if not found.
+    """
     subject_dir = os.path.join(config.DICOM_DIR, subject_id)
     if not os.path.isdir(subject_dir):
         return None, f"Dizin bulunamadi: {subject_dir}"
@@ -82,7 +89,14 @@ def find_rsfmri_dicom_dir(subject_id):
 
 
 def convert_subject(subject_id):
-    """Convert one subject's resting-state DICOM series to NIfTI."""
+    """Convert one subject's resting-state DICOM series to NIfTI.
+
+    Args:
+        subject_id: ADNI subject identifier.
+
+    Returns:
+        Path to the written NIfTI file, or None on failure.
+    """
     dicom_dir, msg = find_rsfmri_dicom_dir(subject_id)
     if dicom_dir is None:
         print(f"  [!] {subject_id}: {msg}")
@@ -134,7 +148,15 @@ def convert_subject(subject_id):
 
 
 def verify_conversion(nifti_path, subject_id):
-    """Check that a converted NIfTI looks valid (4D with enough volumes)."""
+    """Check that a converted NIfTI looks valid (4D with enough volumes).
+
+    Args:
+        nifti_path: Path to the converted NIfTI.
+        subject_id: ADNI subject identifier (for logging).
+
+    Returns:
+        True if the file passes the sanity checks.
+    """
     try:
         import nibabel as nib
         img = nib.load(nifti_path)
@@ -170,7 +192,14 @@ def verify_conversion(nifti_path, subject_id):
 
 
 def convert_all(subject_list=None):
-    """Convert every subject's DICOM series to NIfTI."""
+    """Convert every subject's DICOM series to NIfTI.
+
+    Args:
+        subject_list: Subject identifiers to convert.
+
+    Returns:
+        None; writes one NIfTI per subject.
+    """
     if subject_list is None:
         subject_list = config.ALL_SUBJECTS
 

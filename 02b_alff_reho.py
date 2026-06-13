@@ -19,7 +19,16 @@ config = import_module("00a_config")
 
 def compute_alff_falff(ts: np.ndarray, tr: float,
                        band: tuple[float, float] = (0.01, 0.08)) -> tuple[np.ndarray, np.ndarray]:
-    """Per-ROI ALFF (low-frequency amplitude) and fALFF (its fraction of total power)."""
+    """Per-ROI ALFF and fALFF from the Welch power spectrum.
+
+    Args:
+        ts: (n_timepoints, n_roi) ROI time series.
+        tr: Repetition time in seconds.
+        band: (low, high) frequency band in Hz.
+
+    Returns:
+        Tuple (alff, falff), each of shape (n_roi,).
+    """
     T, n_roi = ts.shape
     fs = 1.0 / tr
     nperseg = min(T, 64)
@@ -42,7 +51,14 @@ def compute_alff_falff(ts: np.ndarray, tr: float,
 
 
 def kendalls_w(data: np.ndarray) -> float:
-    """Kendall's W coefficient of concordance for a (raters x items) matrix."""
+    """Kendall's W coefficient of concordance.
+
+    Args:
+        data: (n_raters, n_items) matrix of values.
+
+    Returns:
+        Concordance coefficient in [0, 1].
+    """
     n_raters, n_items = data.shape
     if n_raters < 2 or n_items < 2:
         return 0.0
@@ -57,7 +73,15 @@ def kendalls_w(data: np.ndarray) -> float:
 
 
 def compute_reho_roi(ts: np.ndarray, k_neighbors: int = 6) -> np.ndarray:
-    """ROI-level ReHo: concordance of each ROI with its k most-correlated neighbours."""
+    """ROI-level ReHo via concordance with the most-correlated neighbours.
+
+    Args:
+        ts: (n_timepoints, n_roi) ROI time series.
+        k_neighbors: Number of neighbour ROIs per region.
+
+    Returns:
+        (n_roi,) array of ReHo values.
+    """
     T, n_roi = ts.shape
     ts_z = (ts - ts.mean(axis=0, keepdims=True)) / (ts.std(axis=0, keepdims=True) + 1e-8)
     fc = np.corrcoef(ts_z.T)
@@ -71,7 +95,14 @@ def compute_reho_roi(ts: np.ndarray, k_neighbors: int = 6) -> np.ndarray:
 
 
 def load_timeseries(sid: str) -> np.ndarray | None:
-    """Load a subject's preprocessed ROI time series, oriented as (time, ROI)."""
+    """Load a subject's preprocessed ROI time series.
+
+    Args:
+        sid: Subject identifier.
+
+    Returns:
+        (n_timepoints, n_roi) array, or None if missing/invalid.
+    """
     p = Path(config.PREPROCESSED_DIR) / f"{sid}_timeseries.npy"
     if not p.exists():
         return None
@@ -85,7 +116,15 @@ def load_timeseries(sid: str) -> np.ndarray | None:
 
 
 def main(atlas_name: str = 'AAL3', skip_existing: bool = True) -> int:
-    """Compute ALFF/fALFF/ReHo for every subject and write the result CSVs."""
+    """Compute ALFF/fALFF/ReHo for every subject and write the CSVs.
+
+    Args:
+        atlas_name: Atlas key used in the output filenames.
+        skip_existing: Reuse already-computed subjects when True.
+
+    Returns:
+        Exit code (0 on success, 1 on error).
+    """
     metadata_csv = Path(config.NIFTI_DIR) / "subject_metadata.csv"
     if not metadata_csv.exists():
         print(f"[ERR] {metadata_csv} yok")

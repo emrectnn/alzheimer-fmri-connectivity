@@ -11,7 +11,14 @@ config = import_module("00a_config")
 
 
 def load_diagnosis(csv_path=None):
-    """Load the ADNI diagnosis summary table (DXSUM)."""
+    """Load the ADNI diagnosis summary table (DXSUM).
+
+    Args:
+        csv_path: Optional path override; defaults to the configured location.
+
+    Returns:
+        The diagnosis table as a DataFrame.
+    """
     if csv_path is None:
         csv_path = config.DXSUM_CSV
 
@@ -29,7 +36,15 @@ def load_diagnosis(csv_path=None):
 
 
 def get_subject_diagnosis(dxsum_df, subject_id):
-    """Return the HC/MCI/AD group for one subject from the diagnosis table."""
+    """Return the HC/MCI/AD group for one subject.
+
+    Args:
+        dxsum_df: Diagnosis table from load_diagnosis().
+        subject_id: ADNI subject identifier.
+
+    Returns:
+        Group label string, or None if unavailable.
+    """
     subj = dxsum_df[dxsum_df["PTID"] == subject_id]
     if subj.empty:
         return None, None, None
@@ -51,7 +66,14 @@ def get_subject_diagnosis(dxsum_df, subject_id):
 
 
 def load_demographics(csv_path=None):
-    """Load the ADNI demographics table."""
+    """Load the ADNI demographics table.
+
+    Args:
+        csv_path: Optional path override.
+
+    Returns:
+        The demographics table as a DataFrame.
+    """
     if csv_path is None:
         csv_path = config.PTDEMOG_CSV
 
@@ -65,7 +87,16 @@ def load_demographics(csv_path=None):
 
 
 def get_subject_demographics(demog_df, subject_id, exam_year=None):
-    """Return age/sex/education for one subject (optionally at a given exam year)."""
+    """Return age, sex and education for one subject.
+
+    Args:
+        demog_df: Demographics table.
+        subject_id: ADNI subject identifier.
+        exam_year: Optional exam year for age at scan.
+
+    Returns:
+        Dict with age, sex and education (values may be None).
+    """
     subj = demog_df[demog_df["PTID"] == subject_id]
     if subj.empty:
         return {}
@@ -95,7 +126,15 @@ def get_subject_demographics(demog_df, subject_id, exam_year=None):
 
 
 def load_clinical_scores(mmse_path=None, cdr_path=None):
-    """Load the MMSE and CDR clinical-score tables."""
+    """Load the MMSE and CDR clinical-score tables.
+
+    Args:
+        mmse_path: Optional MMSE path override.
+        cdr_path: Optional CDR path override.
+
+    Returns:
+        Tuple (mmse_df, cdr_df).
+    """
     mmse_df = None
     cdr_df = None
 
@@ -116,7 +155,16 @@ def load_clinical_scores(mmse_path=None, cdr_path=None):
 
 
 def get_subject_scores(mmse_df, cdr_df, subject_id):
-    """Return the MMSE and CDR scores for one subject."""
+    """Return the MMSE and CDR scores for one subject.
+
+    Args:
+        mmse_df: MMSE table.
+        cdr_df: CDR table.
+        subject_id: ADNI subject identifier.
+
+    Returns:
+        Dict with the available clinical scores.
+    """
     scores = {}
 
     if mmse_df is not None:
@@ -141,7 +189,14 @@ def get_subject_scores(mmse_df, cdr_df, subject_id):
 
 
 def load_deleted_scans(csv_path=None):
-    """Load the list of scans excluded after quality control."""
+    """Load the list of scans excluded after quality control.
+
+    Args:
+        csv_path: Optional path override.
+
+    Returns:
+        Set of excluded subject identifiers.
+    """
     if csv_path is None:
         csv_path = config.DELMRSCANS_CSV
 
@@ -155,8 +210,14 @@ def load_deleted_scans(csv_path=None):
 
 
 def build_subject_metadata(subject_list=None):
-    """Build the subject metadata table (diagnosis, demographics, scores)
-    from the ADNI CSV tables."""
+    """Build the subject metadata table from the ADNI CSV tables.
+
+    Args:
+        subject_list: Optional subset of subjects; defaults to all discovered.
+
+    Returns:
+        DataFrame with diagnosis, demographics and clinical scores per subject.
+    """
     if subject_list is None:
         subject_list = config.ALL_SUBJECTS
 
@@ -238,7 +299,14 @@ def build_subject_metadata(subject_list=None):
 
 
 def match_nifti_files(metadata_df):
-    """Attach the matching NIfTI file path to each subject in the metadata table."""
+    """Attach the matching NIfTI path to each subject row.
+
+    Args:
+        metadata_df: Subject metadata table.
+
+    Returns:
+        The same table with an added fmri_path column.
+    """
     matched = []
     unmatched = []
 
@@ -263,7 +331,15 @@ def match_nifti_files(metadata_df):
 
 
 def validate_nifti(fmri_path, min_timepoints=50):
-    """Check that a NIfTI file exists and has enough time points to analyze."""
+    """Check that a NIfTI exists and has enough time points.
+
+    Args:
+        fmri_path: Path to the subject's NIfTI.
+        min_timepoints: Minimum acceptable number of volumes.
+
+    Returns:
+        True if the file is usable.
+    """
     try:
         import nibabel as nib
         img = nib.load(fmri_path)
@@ -291,7 +367,14 @@ def validate_nifti(fmri_path, min_timepoints=50):
 
 
 def validate_all_subjects(subjects):
-    """Drop subjects whose NIfTI is missing or too short; return the valid ones."""
+    """Drop subjects whose NIfTI is missing or too short.
+
+    Args:
+        subjects: List of subject dicts.
+
+    Returns:
+        The filtered list of valid subjects.
+    """
     from collections import Counter
 
     valid = []
@@ -316,7 +399,14 @@ def validate_all_subjects(subjects):
 
 
 def prepare_subjects(subject_list=None):
-    """Build, validate, and return the final list of analyzable subjects."""
+    """Build, validate and return the final list of analyzable subjects.
+
+    Args:
+        subject_list: Optional subset; defaults to all discovered subjects.
+
+    Returns:
+        List of valid subject dicts, or None if none are usable.
+    """
     metadata_df = build_subject_metadata(subject_list)
     if metadata_df is None or metadata_df.empty:
         return None

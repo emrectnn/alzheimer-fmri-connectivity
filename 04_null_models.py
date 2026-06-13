@@ -19,13 +19,30 @@ graph_metrics = import_module("03_graph_metrics")
 
 
 def generate_erdos_renyi(n, p, seed=None):
-    """Generate an Erdos-Renyi random graph with a given edge probability."""
+    """Generate an Erdos-Renyi random graph.
+
+    Args:
+        n: Number of nodes.
+        p: Edge probability.
+        seed: Optional random seed.
+
+    Returns:
+        The random graph.
+    """
     G = nx.erdos_renyi_graph(n, p, seed=seed)
     return graph_metrics.get_largest_component(G)
 
 
 def generate_configuration_model(degree_sequence, seed=None):
-    """Generate a random graph preserving the given degree sequence."""
+    """Random graph preserving a degree sequence.
+
+    Args:
+        degree_sequence: Target degree sequence.
+        seed: Optional random seed.
+
+    Returns:
+        The random graph.
+    """
     deg_seq = list(degree_sequence)
     if sum(deg_seq) % 2 != 0:
         deg_seq[0] += 1
@@ -37,7 +54,16 @@ def generate_configuration_model(degree_sequence, seed=None):
 
 
 def generate_rth_like(n, density, seed=None):
-    """Generate a random hyperbolic (geometric) graph at a target density."""
+    """Random hyperbolic (geometric) graph at a target density.
+
+    Args:
+        n: Number of nodes.
+        density: Target edge density.
+        seed: Optional random seed.
+
+    Returns:
+        The random graph.
+    """
     rng = np.random.RandomState(seed)
 
     radii = np.arccosh(1 + rng.exponential(scale=1.0, size=n))
@@ -77,7 +103,14 @@ def generate_rth_like(n, density, seed=None):
 
 
 def _compute_null_metrics(args):
-    """Compute graph metrics for one random null graph (worker helper)."""
+    """Compute metrics for one random null graph (worker helper).
+
+    Args:
+        args: Packed tuple of (graph-spec, metric list).
+
+    Returns:
+        Dict of metrics for the generated null graph.
+    """
     G_null, metrics_to_compute = args
     result = {}
 
@@ -116,7 +149,18 @@ def _compute_null_metrics(args):
 
 def compute_null_distribution(G_real, n_null=None, model="erdos_renyi",
                               metrics=None, parallel=True):
-    """Build the null distribution of metrics from random graphs."""
+    """Build the null distribution of metrics from random graphs.
+
+    Args:
+        G_real: The observed graph.
+        n_null: Number of null graphs to generate.
+        model: Null-model family name.
+        metrics: Metrics to evaluate.
+        parallel: Use multiprocessing when True.
+
+    Returns:
+        Dict mapping each metric to its null sample array.
+    """
     if n_null is None:
         n_null = config.N_NULL_ITERATIONS
 
@@ -173,7 +217,15 @@ def compute_null_distribution(G_real, n_null=None, model="erdos_renyi",
 
 
 def compute_deviation_scores(null_dist, observed):
-    """Compute z-scored deviations of observed metrics from the null distribution."""
+    """Z-score the observed metrics against the null distribution.
+
+    Args:
+        null_dist: Output of compute_null_distribution().
+        observed: Observed metric values.
+
+    Returns:
+        Dict of per-metric deviation (z) scores.
+    """
     scores = {}
 
     for metric, null_values in null_dist.items():
@@ -201,7 +253,16 @@ def compute_deviation_scores(null_dist, observed):
 
 def null_model_analysis_all(matrices_dict, model="erdos_renyi",
                              n_null=None):
-    """Run null-model deviation analysis for every subject."""
+    """Run null-model deviation analysis for every subject.
+
+    Args:
+        matrices_dict: Output of compute_all_matrices().
+        model: Null-model family name.
+        n_null: Number of null graphs per subject.
+
+    Returns:
+        DataFrame of per-subject deviation features.
+    """
     if n_null is None:
         n_null = config.N_NULL_ITERATIONS
 
@@ -249,7 +310,15 @@ def null_model_analysis_all(matrices_dict, model="erdos_renyi",
 
 
 def compare_null_models(G_real, n_null=100):
-    """Compare metric deviations across the available null-model families."""
+    """Compare deviation across the available null-model families.
+
+    Args:
+        G_real: The observed graph.
+        n_null: Number of null graphs per family.
+
+    Returns:
+        Dict comparing the families' deviation scores.
+    """
     models = ["erdos_renyi", "configuration", "rth"]
     comparison = {}
 

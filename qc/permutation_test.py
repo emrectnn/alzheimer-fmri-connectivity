@@ -27,7 +27,14 @@ UNSUPPORTED_MODEL_NAMES = ('TwoStage_LGBM', 'TwoStage_SVM')
 
 
 def is_row_supported(row: pd.Series) -> bool:
-    """Whether a leaderboard row can be rebuilt for permutation testing."""
+    """Whether a leaderboard row can be rebuilt for permutation testing.
+
+    Args:
+        row: A leaderboard row.
+
+    Returns:
+        True if the (task, feature, model) combination is supported.
+    """
     task = str(row.get('Task', ''))
     feat = str(row.get('Best_Features', ''))
     model = str(row.get('Best_Model', ''))
@@ -45,7 +52,17 @@ def is_row_supported(row: pd.Series) -> bool:
 
 def pick_supported_topk(task: str, mode: str, residualize: bool,
                         sweep_dir: Path) -> pd.Series | None:
-    """Pick the best supported (feature, model) from the sweep as a fallback."""
+    """Pick the best supported (feature, model) from the sweep as a fallback.
+
+    Args:
+        task: Task name.
+        mode: Feature mode.
+        residualize: Residualization flag.
+        sweep_dir: Directory holding the sweep CSVs.
+
+    Returns:
+        A leaderboard-like Series, or None if nothing is supported.
+    """
     fallback_task = '3class' if task == '3class_twostage' else task
     resid_slug = 'resid' if residualize else 'raw'
     fname = f"task-{fallback_task}__{mode}__{resid_slug}__fixed.csv"
@@ -74,7 +91,19 @@ def pick_supported_topk(task: str, mode: str, residualize: bool,
 def run_permutation_for_row(row: pd.Series, df: pd.DataFrame,
                             n_iter: int, n_repeats: int,
                             random_state: int = 42) -> dict:
-    """Run the full permutation test for one leaderboard row."""
+    """Run the full permutation test for one leaderboard row.
+
+    Args:
+        row: The leaderboard row to test.
+        df: Merged feature DataFrame.
+        n_iter: Number of label permutations.
+        n_repeats: CV repeats per evaluation.
+        random_state: Seed for reproducibility.
+
+    Returns:
+        Result dict with the real/null AUCs and the empirical p-value,
+        or {'error': ...} on failure.
+    """
     task = row['Task']
     mode = row['Mode']
     feat_name = row['Best_Features']

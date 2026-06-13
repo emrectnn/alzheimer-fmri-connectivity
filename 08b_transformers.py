@@ -43,14 +43,21 @@ MAX_FEATURES_HARD_LIMIT = 30
 
 
 class ConfoundRegressor(BaseEstimator, TransformerMixin):
-
     """Regress confounds (age, sex, motion) out of features within each CV fold."""
     def __init__(self, n_confounds=0):
         """Store the transformer hyperparameters."""
         self.n_confounds = int(n_confounds) if n_confounds else 0
 
     def fit(self, X, y=None):
-        """Fit the transformer on the training fold only (CV-safe)."""
+        """Fit the transformer on the training fold only (CV-safe).
+
+        Args:
+            X: Training feature matrix (trailing columns may carry confounds/site).
+            y: Ignored (scikit-learn API).
+
+        Returns:
+            self.
+        """
         X = np.asarray(X, dtype=float)
         if self.n_confounds <= 0:
             self.coef_ = None
@@ -72,7 +79,14 @@ class ConfoundRegressor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Apply the fitted transformation to the input matrix."""
+        """Apply the fitted transformation.
+
+        Args:
+            X: Feature matrix to transform.
+
+        Returns:
+            The transformed feature matrix.
+        """
         X = np.asarray(X, dtype=float)
         if self.n_confounds <= 0 or self.coef_ is None:
             return X
@@ -86,7 +100,6 @@ class ConfoundRegressor(BaseEstimator, TransformerMixin):
 
 
 class ComBatTransformer(BaseEstimator, TransformerMixin):
-
     """CV-safe ComBat site/protocol harmonization transformer."""
     def __init__(self, n_site_cols=1, n_bio_cols=0):
         """Store the transformer hyperparameters."""
@@ -94,7 +107,14 @@ class ComBatTransformer(BaseEstimator, TransformerMixin):
         self.n_bio_cols = int(n_bio_cols) if n_bio_cols else 0
 
     def _split(self, X):
-        """Split the input matrix into feature, biological and site columns."""
+        """Split the input matrix into feature, biological and site columns.
+
+        Args:
+            X: Combined feature/covariate matrix.
+
+        Returns:
+            Tuple (features, biological_covars, site_labels).
+        """
         X = np.asarray(X, dtype=float)
         n_total = X.shape[1]
         n_site = self.n_site_cols
@@ -111,7 +131,16 @@ class ComBatTransformer(BaseEstimator, TransformerMixin):
         return F, B, S
 
     def _build_covars(self, B, S, n_rows):
-        """Build the covariate DataFrame ComBat needs (site + biological)."""
+        """Build the covariate DataFrame ComBat needs.
+
+        Args:
+            B: Biological covariate block.
+            S: Site-label block.
+            n_rows: Number of samples.
+
+        Returns:
+            A covariate DataFrame with the SITE column.
+        """
         covars = pd.DataFrame(index=np.arange(n_rows))
         if S is not None:
             covars['SITE'] = S[:, 0].astype(int).astype(str)
@@ -121,7 +150,15 @@ class ComBatTransformer(BaseEstimator, TransformerMixin):
         return covars
 
     def fit(self, X, y=None):
-        """Fit the transformer on the training fold only (CV-safe)."""
+        """Fit the transformer on the training fold only (CV-safe).
+
+        Args:
+            X: Training feature matrix (trailing columns may carry confounds/site).
+            y: Ignored (scikit-learn API).
+
+        Returns:
+            self.
+        """
         if not HAS_NH or self.n_site_cols <= 0:
             self.model_ = None
             return self
@@ -142,9 +179,19 @@ class ComBatTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Apply the fitted transformation to the input matrix."""
+        """Apply the fitted transformation.
+
+        Args:
+            X: Feature matrix to transform.
+
+        Returns:
+            The transformed feature matrix.
+        """
         if not HAS_NH or self.n_site_cols <= 0:
-            F, _B, _S = self._split(X) if (self.n_site_cols or self.n_bio_cols) else (np.asarray(X, dtype=float), None, None)
+            if self.n_site_cols or self.n_bio_cols:
+                F, _B, _S = self._split(X)
+            else:
+                F, _B, _S = np.asarray(X, dtype=float), None, None
             return F
         F, B, S = self._split(X)
         if self.model_ is None:
@@ -159,7 +206,16 @@ class ComBatTransformer(BaseEstimator, TransformerMixin):
 
 
 def make_pipeline(clf, k_best=None, n_pca=None):
-    """Build a plain scikit-learn pipeline (impute, scale, select, classifier)."""
+    """Build a plain scikit-learn pipeline (impute, scale, select, classifier).
+
+    Args:
+        clf: The final classifier.
+        k_best: Optional SelectKBest feature count.
+        n_pca: Optional PCA component count.
+
+    Returns:
+        A scikit-learn Pipeline.
+    """
     steps = [('imputer', SimpleImputer(strategy='median'))]
     steps.append(('scaler', StandardScaler()))
     if k_best:
@@ -179,6 +235,19 @@ def make_imb_pipeline(clf, k_best=None, n_pca=None, use_smote=True,
     and cross-validation stays leakage-free. The order is deliberate: impute ->
     ComBat (site harmonization, before scaling) -> scale -> confound regression
     (after scaling) -> feature selection -> PCA -> SMOTE -> classifier.
+
+    Args:
+        clf: The final classifier.
+        k_best: Optional SelectKBest feature count.
+        n_pca: Optional PCA component count.
+        use_smote: Add SMOTE oversampling when True.
+        smote_k_neighbors: SMOTE neighbour count.
+        n_confounds: Trailing confound columns to regress out.
+        n_site_cols: Trailing site columns for ComBat.
+        n_bio_cols: Trailing biological-covariate columns for ComBat.
+
+    Returns:
+        A leakage-safe imbalanced-learn (or scikit-learn) Pipeline.
     """
     steps = [
         ('imputer', SimpleImputer(strategy='median')),
@@ -205,7 +274,16 @@ def make_imb_pipeline(clf, k_best=None, n_pca=None, use_smote=True,
 
 
 def load_timeseries_lookup(subject_ids, data_dir=None, min_rois=None):
-    """Load subject time series into an id-to-array dictionary."""
+    """Load subject time series into an id-to-array dictionary.
+
+    Args:
+        subject_ids: Subject identifiers to load.
+        data_dir: Optional time-series directory.
+        min_rois: Optional minimum ROI count filter.
+
+    Returns:
+        Dict mapping subject id to its (n_timepoints, n_roi) array.
+    """
     if data_dir is None:
         data_dir = config.PREPROCESSED_DIR
 
@@ -235,7 +313,21 @@ def make_tangent_pipeline(clf, k_best=MAX_FEATURES_HARD_LIMIT,
                           use_nbs=False, nbs_n_roi=None,
                           nbs_thresh=None, nbs_n_perm=None,
                           nbs_alpha=None):
-    """Build a tangent-space (optionally NBS) pipeline ending in the classifier."""
+    """Build a tangent-space (optionally NBS) pipeline ending in the classifier.
+
+    Args:
+        clf: The final classifier.
+        k_best: SelectKBest feature count.
+        n_confounds: Trailing confound columns to regress out.
+        time_series_lookup: id-to-array map for the tangent transformer.
+        use_smote: Add SMOTE oversampling when True.
+        smote_k_neighbors: SMOTE neighbour count.
+        use_nbs: Add the NBS edge selector when True.
+        nbs_n_roi, nbs_thresh, nbs_n_perm, nbs_alpha: NBS hyperparameters.
+
+    Returns:
+        A leakage-safe pipeline.
+    """
     connectivity_mod = import_module("02a_connectivity")
     tangent_cls = connectivity_mod.TangentSpaceTransformer
 

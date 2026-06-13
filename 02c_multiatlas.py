@@ -34,7 +34,14 @@ except Exception:
 
 
 def load_atlas_by_name(atlas_key: str):
-    """Load an atlas image, labels and ROI count from the config spec."""
+    """Load an atlas image, labels and ROI count from the config spec.
+
+    Args:
+        atlas_key: Atlas name ('Schaefer200', 'HO48', 'AAL3').
+
+    Returns:
+        Tuple (atlas_img, labels, n_rois); atlas_img is None for AAL3.
+    """
     if not HAS_NILEARN:
         raise RuntimeError("nilearn gerekli")
 
@@ -61,7 +68,17 @@ def load_atlas_by_name(atlas_key: str):
 
 def extract_timeseries(fmri_path: str, atlas_img, tr: float,
                        n_skip: int = None) -> np.ndarray:
-    """Extract atlas-based ROI mean time series from one rsfMRI scan."""
+    """Extract atlas-based ROI mean time series from one scan.
+
+    Args:
+        fmri_path: Path to the rsfMRI NIfTI.
+        atlas_img: Labelled atlas image.
+        tr: Repetition time in seconds.
+        n_skip: Number of initial volumes to drop.
+
+    Returns:
+        (n_timepoints, n_roi) time series.
+    """
     if n_skip is None:
         n_skip = getattr(config, 'FIRST_N_VOLUMES',
                          getattr(config, 'N_SKIP_VOLUMES', 5))
@@ -88,7 +105,14 @@ def extract_timeseries(fmri_path: str, atlas_img, tr: float,
 
 
 def compute_fc_vector(ts: np.ndarray) -> np.ndarray:
-    """Upper-triangle Pearson correlation vector of a time series."""
+    """Upper-triangle Pearson correlation vector of a time series.
+
+    Args:
+        ts: (n_timepoints, n_roi) time series.
+
+    Returns:
+        1-D vector of unique edge correlations.
+    """
     fc = np.corrcoef(ts.T)
     fc = np.nan_to_num(fc, nan=0.0)
     iu = np.triu_indices(fc.shape[0], k=1)
@@ -97,7 +121,15 @@ def compute_fc_vector(ts: np.ndarray) -> np.ndarray:
 
 def compute_global_graph_features(fc_mat: np.ndarray,
                                   density: float = 0.15) -> dict:
-    """A few global graph metrics for one subject at a fixed density."""
+    """A few global graph metrics at a fixed density.
+
+    Args:
+        fc_mat: (n_roi, n_roi) correlation matrix.
+        density: Target graph density for thresholding.
+
+    Returns:
+        Dict of global metrics (empty if networkx is unavailable).
+    """
     if not HAS_NX:
         return {}
     n = fc_mat.shape[0]
@@ -150,7 +182,15 @@ def _compute_modularity(G) -> float:
 
 
 def run_atlas(atlas_key: str, skip_existing: bool = True) -> int:
-    """Process every subject for one atlas: time series, FC and global metrics."""
+    """Process every subject for one atlas (time series, FC, metrics).
+
+    Args:
+        atlas_key: Atlas name to process.
+        skip_existing: Skip already-processed subjects when True.
+
+    Returns:
+        Exit code (0 on success, 1 on error).
+    """
     metadata_csv = Path(config.NIFTI_DIR) / "subject_metadata.csv"
     if not metadata_csv.exists():
         print(f"[ERR] {metadata_csv} yok")

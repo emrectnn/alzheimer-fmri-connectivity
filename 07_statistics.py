@@ -7,7 +7,16 @@ from statsmodels.stats.multitest import multipletests
 
 
 def group_comparison(metrics_df, metric_col, groups=None):
-    """Compare a metric across groups (t-test/ANOVA) with effect size."""
+    """Compare a metric across groups with an effect size.
+
+    Args:
+        metrics_df: Per-subject metrics with a group column.
+        metric_col: Name of the metric column to test.
+        groups: Optional subset of group labels to compare.
+
+    Returns:
+        Dict with the test statistic, p-value and effect size.
+    """
     if groups is None:
         groups = ["HC", "MCI", "AD"]
 
@@ -64,7 +73,16 @@ def group_comparison(metrics_df, metric_col, groups=None):
 
 
 def report_all_metrics(metrics_df, metric_cols=None, correction="bonferroni"):
-    """Run group comparisons for all metrics with multiple-comparison correction."""
+    """Run group comparisons for all metrics with correction.
+
+    Args:
+        metrics_df: Per-subject metrics table.
+        metric_cols: Optional metric columns; defaults to all numeric.
+        correction: Multiple-comparison correction method.
+
+    Returns:
+        DataFrame of per-metric, per-pair statistics.
+    """
     if metric_cols is None:
         numeric_cols = metrics_df.select_dtypes(include=[np.number]).columns
         exclude = ["label", "n_nodes", "n_edges", "n_nodes_lc", "n_communities"]
@@ -96,7 +114,14 @@ def report_all_metrics(metrics_df, metric_cols=None, correction="bonferroni"):
 
 
 def print_summary(stats_df):
-    """Print a short summary of the statistical results."""
+    """Print a short summary of the statistical results.
+
+    Args:
+        stats_df: Output of report_all_metrics().
+
+    Returns:
+        None; prints to stdout.
+    """
     if stats_df.empty:
         print("Sonuc yok.")
         return

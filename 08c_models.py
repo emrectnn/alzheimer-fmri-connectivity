@@ -62,7 +62,19 @@ make_tangent_pipeline = _tf.make_tangent_pipeline
 
 
 def cv_score(X, y, model, n_splits=5, random_state=42, n_repeats=None):
-    """Repeated stratified cross-validation; returns AUC/accuracy/per-class metrics."""
+    """Repeated stratified cross-validation with rich metrics.
+
+    Args:
+        X: Feature matrix.
+        y: Labels.
+        model: Estimator/pipeline to evaluate.
+        n_splits: Folds per repeat.
+        random_state: Seed for reproducibility.
+        n_repeats: Number of CV repeats (None for a single pass).
+
+    Returns:
+        Dict with AUC, accuracy, per-class recalls and a confusion matrix.
+    """
     if n_repeats and n_repeats > 1:
         cv = RepeatedStratifiedKFold(
             n_splits=n_splits, n_repeats=n_repeats, random_state=random_state)
@@ -116,7 +128,18 @@ def cv_score(X, y, model, n_splits=5, random_state=42, n_repeats=None):
 
 def _build_models(n_feat, task='3class', n_confounds=None,
                   n_site_cols=0, n_bio_cols=0):
-    """Build the roster of candidate classifiers wrapped in leakage-safe pipelines."""
+    """Build the candidate classifiers wrapped in leakage-safe pipelines.
+
+    Args:
+        n_feat: Number of input features.
+        task: '3class' or 'binary'.
+        n_confounds: Trailing confound columns, if any.
+        n_site_cols: Trailing site columns for ComBat, if any.
+        n_bio_cols: Trailing biological-covariate columns, if any.
+
+    Returns:
+        Dict mapping model name to its pipeline.
+    """
     auto_k = MAX_FEATURES_HARD_LIMIT if n_feat > MAX_FEATURES_HARD_LIMIT else None
     kw = {
         'k_best': auto_k,
@@ -267,7 +290,18 @@ def _optuna_suggest(trial, model_name):
 
 def _build_models_optuna(X, y, task='3class', n_confounds=None,
                          n_site_cols=0, n_bio_cols=0, n_trials=50):
-    """Tune the top models with Optuna and return the best pipelines."""
+    """Tune the top models with Optuna and return the best pipelines.
+
+    Args:
+        X: Feature matrix.
+        y: Labels.
+        task: '3class' or 'binary'.
+        n_confounds, n_site_cols, n_bio_cols: Trailing covariate column counts.
+        n_trials: Optuna trials per model.
+
+    Returns:
+        Dict mapping model name to its tuned pipeline.
+    """
     if not HAS_OPTUNA:
         return _build_models(X.shape[1], task=task, n_confounds=n_confounds,
                              n_site_cols=n_site_cols, n_bio_cols=n_bio_cols)

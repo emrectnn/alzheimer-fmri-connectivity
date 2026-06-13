@@ -26,7 +26,14 @@ config = import_module("00a_config")
 
 
 def get_largest_component(G):
-    """Return the subgraph of the largest connected component."""
+    """Return the subgraph of the largest connected component.
+
+    Args:
+        G: Input graph.
+
+    Returns:
+        The largest-component subgraph.
+    """
     if nx.is_connected(G):
         return G
     largest = max(nx.connected_components(G), key=len)
@@ -34,13 +41,27 @@ def get_largest_component(G):
 
 
 def binary_to_graph(binary_matrix):
-    """Build a NetworkX graph from a binary adjacency matrix."""
+    """Build a NetworkX graph from a binary adjacency matrix.
+
+    Args:
+        binary_matrix: (n, n) 0/1 adjacency matrix.
+
+    Returns:
+        The corresponding undirected graph.
+    """
     G = nx.from_numpy_array(binary_matrix)
     return G
 
 
 def compute_global_metrics(G):
-    """Compute global graph metrics for a binary graph."""
+    """Compute global graph metrics for a binary graph.
+
+    Args:
+        G: Binary graph.
+
+    Returns:
+        Dict of global metrics (clustering, efficiency, density, ...).
+    """
     G_lc = get_largest_component(G)
     n = G_lc.number_of_nodes()
     metrics = {}
@@ -67,7 +88,15 @@ def compute_global_metrics(G):
 
 
 def compute_small_world(G, n_random=100):
-    """Compute the small-world index sigma against random graphs."""
+    """Small-world index sigma against random graphs.
+
+    Args:
+        G: Binary graph.
+        n_random: Number of random reference graphs.
+
+    Returns:
+        The sigma value (NaN if undefined).
+    """
     G_lc = get_largest_component(G)
     n = G_lc.number_of_nodes()
     p = nx.density(G_lc)
@@ -113,7 +142,15 @@ def compute_small_world(G, n_random=100):
 
 
 def compute_dmn_clustering(G, dmn_indices=None):
-    """Mean clustering coefficient over the default-mode-network nodes."""
+    """Mean clustering over the default-mode-network nodes.
+
+    Args:
+        G: Binary graph.
+        dmn_indices: Optional DMN node indices; defaults to config.
+
+    Returns:
+        Mean DMN clustering coefficient.
+    """
     if dmn_indices is None:
         dmn_indices = config.DMN_ROI_INDICES
 
@@ -132,7 +169,15 @@ def compute_dmn_clustering(G, dmn_indices=None):
 
 
 def compute_rich_club(G, k_range=None):
-    """Rich-club coefficient curve over a range of degrees."""
+    """Rich-club coefficient curve over a range of degrees.
+
+    Args:
+        G: Binary graph.
+        k_range: Optional degree range.
+
+    Returns:
+        Dict (or summary) of rich-club coefficients.
+    """
     G_lc = get_largest_component(G)
 
     if G_lc.number_of_nodes() < 3:
@@ -161,7 +206,16 @@ def compute_rich_club(G, k_range=None):
 
 def compute_cerebellar_connectivity(conn_matrix, binary_matrix,
                                      cerebellar_indices=None):
-    """Mean connectivity of the cerebellar ROIs."""
+    """Mean connectivity of the cerebellar ROIs.
+
+    Args:
+        conn_matrix: Weighted connectivity matrix.
+        binary_matrix: Binary adjacency matrix.
+        cerebellar_indices: Cerebellar ROI indices.
+
+    Returns:
+        Mean cerebellar connectivity value.
+    """
     if cerebellar_indices is None:
         cerebellar_indices = config.CEREBELLAR_ROI_INDICES
 
@@ -180,7 +234,15 @@ def compute_cerebellar_connectivity(conn_matrix, binary_matrix,
 
 
 def compute_louvain_modularity(G, n_repetitions=None):
-    """Louvain modularity (Q), averaged over repetitions."""
+    """Louvain modularity (Q), averaged over repetitions.
+
+    Args:
+        G: Binary graph.
+        n_repetitions: Number of Louvain runs to average.
+
+    Returns:
+        Mean modularity value.
+    """
     if not HAS_LOUVAIN:
         return {"modularity": 0, "n_communities": 0}
 
@@ -241,7 +303,14 @@ def compute_louvain_modularity(G, n_repetitions=None):
 
 
 def compute_nodal_metrics(G):
-    """Compute nodal centrality metrics for each region."""
+    """Compute nodal centrality metrics for each region.
+
+    Args:
+        G: Binary graph.
+
+    Returns:
+        Dict mapping metric name to a per-node array.
+    """
     G_lc = get_largest_component(G)
     n_total = G.number_of_nodes()
 
@@ -272,7 +341,15 @@ def compute_nodal_metrics(G):
 
 
 def compute_metrics_across_densities(conn_matrix, density_range=None):
-    """Integrate graph metrics over densities using the AUC strategy."""
+    """Integrate graph metrics over densities (AUC strategy).
+
+    Args:
+        conn_matrix: Correlation matrix.
+        density_range: Iterable of densities; defaults to config.
+
+    Returns:
+        Dict of density-integrated (AUC) global metrics.
+    """
     if density_range is None:
         density_range = config.DENSITY_RANGE
 
@@ -321,7 +398,16 @@ def compute_metrics_across_densities(conn_matrix, density_range=None):
 
 
 def compute_all_for_subject(conn_matrix, binary_matrix=None, density=0.15):
-    """Compute all graph metrics for one subject."""
+    """Compute all graph metrics for one subject.
+
+    Args:
+        conn_matrix: Correlation matrix.
+        binary_matrix: Optional precomputed binary matrix.
+        density: Density used when thresholding internally.
+
+    Returns:
+        Tuple (global_metrics_dict, nodal_metrics_dict).
+    """
     from importlib import import_module
     conn_mod = import_module("02a_connectivity")
 
@@ -362,7 +448,14 @@ def compute_all_for_subject(conn_matrix, binary_matrix=None, density=0.15):
 
 
 def compute_all_subjects(matrices_dict):
-    """Compute graph metrics for every subject."""
+    """Compute graph metrics for every subject.
+
+    Args:
+        matrices_dict: Output of compute_all_matrices().
+
+    Returns:
+        Tuple (global_df, nodal_list).
+    """
     all_global = []
     all_nodal = []
 
