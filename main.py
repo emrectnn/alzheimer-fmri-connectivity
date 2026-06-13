@@ -23,12 +23,12 @@ sys.path.insert(0, SRC_DIR)
 def run_demo():
     """Run the pipeline on the small nilearn demo dataset."""
     from importlib import import_module
-    config = import_module("00_config")
+    config = import_module("00a_config")
     preprocess = import_module("01_preprocess")
-    connectivity = import_module("02_connectivity")
+    connectivity = import_module("02a_connectivity")
     graph_metrics = import_module("03_graph_metrics")
     null_models = import_module("04_null_models")
-    classification = import_module("06_classification")
+    classification = import_module("06a_classification")
     statistics = import_module("07_statistics")
 
     from nilearn import datasets
@@ -89,19 +89,19 @@ def run_demo():
 def run_full_pipeline(convert_only=False):
     """Run the full ADNI pipeline from DICOM conversion to classification."""
     from importlib import import_module
-    config = import_module("00_config")
-    dicom2nifti = import_module("00a_dicom2nifti")
-    adni_data = import_module("00b_adni_data")
+    config = import_module("00a_config")
+    dicom2nifti = import_module("00c_dicom2nifti")
+    adni_data = import_module("00d_adni_data")
     preprocess = import_module("01_preprocess")
-    connectivity = import_module("02_connectivity")
+    connectivity = import_module("02a_connectivity")
     graph_metrics = import_module("03_graph_metrics")
     null_models = import_module("04_null_models")
-    classification = import_module("06_classification")
+    classification = import_module("06a_classification")
     statistics = import_module("07_statistics")
 
     print("TAM PIPELINE -- ADNI VERISI")
 
-    discover = import_module("00_discover")
+    discover = import_module("00b_discover")
     try:
         discover.update_config()
         print(f"  [OK] Discover (pre-DICOM): {len(config.ALL_SUBJECTS)} denek "
@@ -119,7 +119,7 @@ def run_full_pipeline(convert_only=False):
 
     print("\n[1/7] ADNI veri hazirlama...")
 
-    discover = import_module("00_discover")
+    discover = import_module("00b_discover")
     try:
         discover.update_config()
         print(f"  [OK] Discover: {len(config.ALL_SUBJECTS)} denek bulundu "
@@ -140,7 +140,7 @@ def run_full_pipeline(convert_only=False):
     matrices = connectivity.compute_all_matrices(subjects)
 
     try:
-        alff_reho = import_module("02c_alff_reho")
+        alff_reho = import_module("02b_alff_reho")
         print("\n[3b/7] ALFF / fALFF / ReHo...")
         alff_reho.main(atlas_name='AAL3')
     except Exception as e:
@@ -148,7 +148,7 @@ def run_full_pipeline(convert_only=False):
 
     if getattr(config, 'MULTI_ATLAS_ENABLED', False):
         try:
-            multi_atlas = import_module("02d_multiatlas")
+            multi_atlas = import_module("02c_multiatlas")
             print("\n[3c/7] Multi-atlas (Schaefer200 + HO48)...")
             for atlas_key in ('Schaefer200', 'HO48'):
                 try:
@@ -170,7 +170,7 @@ def run_full_pipeline(convert_only=False):
     stats_df.to_csv(os.path.join(config.METRICS_DIR, "statistical_tests.csv"), index=False)
 
     print("\n[7/7] ML Siniflandirma...")
-    enhanced = import_module("08_enhanced_classification")
+    enhanced = import_module("08e_run")
     try:
         enhanced.run_enhanced_classification()
     except Exception as e:

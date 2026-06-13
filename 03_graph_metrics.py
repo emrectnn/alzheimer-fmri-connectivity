@@ -22,10 +22,11 @@ except ImportError:
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 def get_largest_component(G):
+    """Return the subgraph of the largest connected component."""
     if nx.is_connected(G):
         return G
     largest = max(nx.connected_components(G), key=len)
@@ -33,6 +34,7 @@ def get_largest_component(G):
 
 
 def binary_to_graph(binary_matrix):
+    """Build a NetworkX graph from a binary adjacency matrix."""
     G = nx.from_numpy_array(binary_matrix)
     return G
 
@@ -111,6 +113,7 @@ def compute_small_world(G, n_random=100):
 
 
 def compute_dmn_clustering(G, dmn_indices=None):
+    """Mean clustering coefficient over the default-mode-network nodes."""
     if dmn_indices is None:
         dmn_indices = config.DMN_ROI_INDICES
 
@@ -129,6 +132,7 @@ def compute_dmn_clustering(G, dmn_indices=None):
 
 
 def compute_rich_club(G, k_range=None):
+    """Rich-club coefficient curve over a range of degrees."""
     G_lc = get_largest_component(G)
 
     if G_lc.number_of_nodes() < 3:
@@ -157,6 +161,7 @@ def compute_rich_club(G, k_range=None):
 
 def compute_cerebellar_connectivity(conn_matrix, binary_matrix,
                                      cerebellar_indices=None):
+    """Mean connectivity of the cerebellar ROIs."""
     if cerebellar_indices is None:
         cerebellar_indices = config.CEREBELLAR_ROI_INDICES
 
@@ -175,6 +180,7 @@ def compute_cerebellar_connectivity(conn_matrix, binary_matrix,
 
 
 def compute_louvain_modularity(G, n_repetitions=None):
+    """Louvain modularity (Q), averaged over repetitions."""
     if not HAS_LOUVAIN:
         return {"modularity": 0, "n_communities": 0}
 
@@ -275,7 +281,7 @@ def compute_metrics_across_densities(conn_matrix, density_range=None):
 
     for d in density_range:
         from importlib import import_module
-        conn_mod = import_module("02_connectivity")
+        conn_mod = import_module("02a_connectivity")
         binary = conn_mod.threshold_by_density(conn_matrix, d)
         G = binary_to_graph(binary)
 
@@ -317,7 +323,7 @@ def compute_metrics_across_densities(conn_matrix, density_range=None):
 def compute_all_for_subject(conn_matrix, binary_matrix=None, density=0.15):
     """Compute all graph metrics for one subject."""
     from importlib import import_module
-    conn_mod = import_module("02_connectivity")
+    conn_mod = import_module("02a_connectivity")
 
     if binary_matrix is None:
         binary_matrix = conn_mod.threshold_by_density(conn_matrix, density)
@@ -370,7 +376,7 @@ def compute_all_subjects(matrices_dict):
             binary = data["thresholded"].get(0.15)
             if binary is None:
                 from importlib import import_module
-                conn_mod = import_module("02_connectivity")
+                conn_mod = import_module("02a_connectivity")
                 binary = conn_mod.threshold_by_density(data["raw"], 0.15)
 
             gm, nm = compute_all_for_subject(data["raw"], binary)

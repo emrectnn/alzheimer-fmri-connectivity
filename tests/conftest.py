@@ -15,11 +15,13 @@ SEED = 42
 
 @pytest.fixture(scope="session")
 def rng():
+    """Session-wide deterministic random generator (seed=42)."""
     return np.random.default_rng(SEED)
 
 
 @pytest.fixture(scope="session")
 def synthetic_timeseries_list(rng):
+    """List of synthetic ROI time series with modular structure."""
     n_subj, n_tr, n_roi = 20, 100, 30
     subjects = []
     for _ in range(n_subj):
@@ -34,6 +36,7 @@ def synthetic_timeseries_list(rng):
 
 @pytest.fixture(scope="session")
 def synthetic_corr_matrix(synthetic_timeseries_list):
+    """Symmetric, zero-diagonal correlation matrix fixture."""
     ts = synthetic_timeseries_list[0]
     ts_std = (ts - ts.mean(axis=0)) / (ts.std(axis=0) + 1e-12)
     corr = (ts_std.T @ ts_std) / (ts.shape[0] - 1)
@@ -43,6 +46,7 @@ def synthetic_corr_matrix(synthetic_timeseries_list):
 
 @pytest.fixture(scope="session")
 def synthetic_binary_matrix(synthetic_corr_matrix):
+    """15%-density thresholded binary matrix fixture."""
     n = synthetic_corr_matrix.shape[0]
     triu_idx = np.triu_indices(n, k=1)
     vals = np.abs(synthetic_corr_matrix[triu_idx])
@@ -54,12 +58,14 @@ def synthetic_binary_matrix(synthetic_corr_matrix):
 
 @pytest.fixture(scope="session")
 def synthetic_graph(synthetic_binary_matrix):
+    """NetworkX graph built from the synthetic binary matrix."""
     import networkx as nx
     return nx.from_numpy_array(synthetic_binary_matrix)
 
 
 @pytest.fixture(scope="session")
 def synthetic_feature_df(rng):
+    """Synthetic feature DataFrame with label/group/subject_id columns."""
     groups_config = [("HC", 12, 0), ("MCI", 10, 1), ("AD", 8, 2)]
     rows, group_col, subj_ids = [], [], []
     idx = 0

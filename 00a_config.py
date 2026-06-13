@@ -114,7 +114,8 @@ USE_COMBAT = True
 
 ATLASES = {
     'AAL3': {'n_rois': 166, 'fetcher': None},
-    'Schaefer200': {'n_rois': 200, 'fetcher': 'schaefer_2018', 'yeo_networks': 7, 'resolution_mm': 2},
+    'Schaefer200': {'n_rois': 200, 'fetcher': 'schaefer_2018',
+                    'yeo_networks': 7, 'resolution_mm': 2},
     'HO48': {'n_rois': 48, 'fetcher': 'harvard_oxford', 'atlas_name': 'cort-maxprob-thr25-2mm'},
 }
 DEFAULT_ATLAS = 'AAL3'
@@ -149,5 +150,6 @@ LABEL_MAP = {"HC": 0, "MCI": 1, "AD": 2}
 
 print("Config yuklendi.")
 print(f"  Atlas: {ATLAS_NAME} ({N_ROIS} ROI)")
-print(f"  Kullanilacak ozne: {len(ALL_SUBJECTS)} (standart: {len(STANDARD_SUBJECTS)}, MB: {len(MB_SUBJECTS)})")
+print(f"  Kullanilacak ozne: {len(ALL_SUBJECTS)} "
+      f"(standart: {len(STANDARD_SUBJECTS)}, MB: {len(MB_SUBJECTS)})")
 print(f"  Density plaji: {DENSITY_RANGE[0]}-{DENSITY_RANGE[-1]}")

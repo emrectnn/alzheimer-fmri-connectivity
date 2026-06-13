@@ -9,13 +9,14 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 EXCLUDE_SERIES = ["MoCoSeries", "Perfusion_Weighted", "relCBF", "phase"]
 
 
 def check_dcm2niix():
+    """Return True if the dcm2niix converter is available on PATH."""
     if shutil.which("dcm2niix") is None:
         print("[!] dcm2niix bulunamadi!")
         print("    Kurulum:")
@@ -29,6 +30,7 @@ def check_dcm2niix():
 
 
 def find_rsfmri_dicom_dir(subject_id):
+    """Locate a subject's resting-state fMRI DICOM folder."""
     subject_dir = os.path.join(config.DICOM_DIR, subject_id)
     if not os.path.isdir(subject_dir):
         return None, f"Dizin bulunamadi: {subject_dir}"
@@ -132,6 +134,7 @@ def convert_subject(subject_id):
 
 
 def verify_conversion(nifti_path, subject_id):
+    """Check that a converted NIfTI looks valid (4D with enough volumes)."""
     try:
         import nibabel as nib
         img = nib.load(nifti_path)

@@ -16,7 +16,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "kod"))
-config = import_module("00_config")
+config = import_module("00a_config")
 
 try:
     from nilearn import datasets as nl_datasets
@@ -34,6 +34,7 @@ except Exception:
 
 
 def load_atlas_by_name(atlas_key: str):
+    """Load an atlas image, labels and ROI count from the config spec."""
     if not HAS_NILEARN:
         raise RuntimeError("nilearn gerekli")
 
@@ -60,6 +61,7 @@ def load_atlas_by_name(atlas_key: str):
 
 def extract_timeseries(fmri_path: str, atlas_img, tr: float,
                        n_skip: int = None) -> np.ndarray:
+    """Extract atlas-based ROI mean time series from one rsfMRI scan."""
     if n_skip is None:
         n_skip = getattr(config, 'FIRST_N_VOLUMES',
                          getattr(config, 'N_SKIP_VOLUMES', 5))
@@ -86,6 +88,7 @@ def extract_timeseries(fmri_path: str, atlas_img, tr: float,
 
 
 def compute_fc_vector(ts: np.ndarray) -> np.ndarray:
+    """Upper-triangle Pearson correlation vector of a time series."""
     fc = np.corrcoef(ts.T)
     fc = np.nan_to_num(fc, nan=0.0)
     iu = np.triu_indices(fc.shape[0], k=1)
@@ -94,6 +97,7 @@ def compute_fc_vector(ts: np.ndarray) -> np.ndarray:
 
 def compute_global_graph_features(fc_mat: np.ndarray,
                                   density: float = 0.15) -> dict:
+    """A few global graph metrics for one subject at a fixed density."""
     if not HAS_NX:
         return {}
     n = fc_mat.shape[0]
@@ -136,6 +140,7 @@ def compute_global_graph_features(fc_mat: np.ndarray,
 
 
 def _compute_modularity(G) -> float:
+    """Greedy-community modularity (Q) of a graph; NaN on failure."""
     from networkx.algorithms.community import greedy_modularity_communities, modularity
     try:
         comms = list(greedy_modularity_communities(G))
@@ -145,6 +150,7 @@ def _compute_modularity(G) -> float:
 
 
 def run_atlas(atlas_key: str, skip_existing: bool = True) -> int:
+    """Process every subject for one atlas: time series, FC and global metrics."""
     metadata_csv = Path(config.NIFTI_DIR) / "subject_metadata.csv"
     if not metadata_csv.exists():
         print(f"[ERR] {metadata_csv} yok")
@@ -267,6 +273,7 @@ def run_atlas(atlas_key: str, skip_existing: bool = True) -> int:
 
 
 def main() -> int:
+    """Run the multi-atlas pipeline for the requested atlases."""
     ap = argparse.ArgumentParser()
     ap.add_argument('--atlases', nargs='+', default=['Schaefer200', 'HO48'])
     ap.add_argument('--no-skip-existing', action='store_true')

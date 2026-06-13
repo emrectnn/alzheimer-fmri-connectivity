@@ -7,6 +7,7 @@ gm_mod = import_module("03_graph_metrics")
 
 
 def test_binary_to_graph_edge_count(synthetic_binary_matrix):
+    """Graph node/edge counts match the binary matrix."""
     G = gm_mod.binary_to_graph(synthetic_binary_matrix)
     n = synthetic_binary_matrix.shape[0]
     assert G.number_of_nodes() == n
@@ -15,6 +16,7 @@ def test_binary_to_graph_edge_count(synthetic_binary_matrix):
 
 
 def test_compute_global_metrics_no_nan(synthetic_graph):
+    """Global metrics are in valid ranges with no NaNs."""
     metrics = gm_mod.compute_global_metrics(synthetic_graph)
     assert 0.0 <= metrics["clustering"] <= 1.0
     assert 0.0 <= metrics["density"] <= 1.0
@@ -24,6 +26,7 @@ def test_compute_global_metrics_no_nan(synthetic_graph):
 
 
 def test_compute_nodal_metrics_length(synthetic_graph):
+    """Each nodal metric has one value per node."""
     nodal = gm_mod.compute_nodal_metrics(synthetic_graph)
     n = synthetic_graph.number_of_nodes()
     for key in ("degree_centrality", "betweenness_centrality",
@@ -33,7 +36,8 @@ def test_compute_nodal_metrics_length(synthetic_graph):
 
 
 def test_density_monotonic_edge_count(synthetic_corr_matrix):
-    conn_mod = import_module("02_connectivity")
+    """Edge count grows monotonically with target density."""
+    conn_mod = import_module("02a_connectivity")
     prev_edges = -1
     for d in (0.05, 0.10, 0.20, 0.30):
         binary = conn_mod.threshold_by_density(synthetic_corr_matrix, d)

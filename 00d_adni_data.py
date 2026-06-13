@@ -1,4 +1,4 @@
-"""Match NIfTI scans with ADNI clinical metadata and build the subject list with HC/MCI/AD labels."""
+"""Match NIfTI scans with ADNI clinical metadata and build the labelled subject list."""
 
 import os
 import sys
@@ -7,10 +7,11 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 def load_diagnosis(csv_path=None):
+    """Load the ADNI diagnosis summary table (DXSUM)."""
     if csv_path is None:
         csv_path = config.DXSUM_CSV
 
@@ -28,6 +29,7 @@ def load_diagnosis(csv_path=None):
 
 
 def get_subject_diagnosis(dxsum_df, subject_id):
+    """Return the HC/MCI/AD group for one subject from the diagnosis table."""
     subj = dxsum_df[dxsum_df["PTID"] == subject_id]
     if subj.empty:
         return None, None, None
@@ -49,6 +51,7 @@ def get_subject_diagnosis(dxsum_df, subject_id):
 
 
 def load_demographics(csv_path=None):
+    """Load the ADNI demographics table."""
     if csv_path is None:
         csv_path = config.PTDEMOG_CSV
 
@@ -62,6 +65,7 @@ def load_demographics(csv_path=None):
 
 
 def get_subject_demographics(demog_df, subject_id, exam_year=None):
+    """Return age/sex/education for one subject (optionally at a given exam year)."""
     subj = demog_df[demog_df["PTID"] == subject_id]
     if subj.empty:
         return {}
@@ -91,6 +95,7 @@ def get_subject_demographics(demog_df, subject_id, exam_year=None):
 
 
 def load_clinical_scores(mmse_path=None, cdr_path=None):
+    """Load the MMSE and CDR clinical-score tables."""
     mmse_df = None
     cdr_df = None
 
@@ -111,6 +116,7 @@ def load_clinical_scores(mmse_path=None, cdr_path=None):
 
 
 def get_subject_scores(mmse_df, cdr_df, subject_id):
+    """Return the MMSE and CDR scores for one subject."""
     scores = {}
 
     if mmse_df is not None:
@@ -135,6 +141,7 @@ def get_subject_scores(mmse_df, cdr_df, subject_id):
 
 
 def load_deleted_scans(csv_path=None):
+    """Load the list of scans excluded after quality control."""
     if csv_path is None:
         csv_path = config.DELMRSCANS_CSV
 
@@ -148,7 +155,8 @@ def load_deleted_scans(csv_path=None):
 
 
 def build_subject_metadata(subject_list=None):
-    """Build the subject metadata table (diagnosis, demographics, clinical scores) from the ADNI CSV tables."""
+    """Build the subject metadata table (diagnosis, demographics, scores)
+    from the ADNI CSV tables."""
     if subject_list is None:
         subject_list = config.ALL_SUBJECTS
 
@@ -283,6 +291,7 @@ def validate_nifti(fmri_path, min_timepoints=50):
 
 
 def validate_all_subjects(subjects):
+    """Drop subjects whose NIfTI is missing or too short; return the valid ones."""
     from collections import Counter
 
     valid = []

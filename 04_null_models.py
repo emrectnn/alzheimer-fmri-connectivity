@@ -14,16 +14,18 @@ from multiprocessing import Pool, cpu_count
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 graph_metrics = import_module("03_graph_metrics")
 
 
 def generate_erdos_renyi(n, p, seed=None):
+    """Generate an Erdos-Renyi random graph with a given edge probability."""
     G = nx.erdos_renyi_graph(n, p, seed=seed)
     return graph_metrics.get_largest_component(G)
 
 
 def generate_configuration_model(degree_sequence, seed=None):
+    """Generate a random graph preserving the given degree sequence."""
     deg_seq = list(degree_sequence)
     if sum(deg_seq) % 2 != 0:
         deg_seq[0] += 1
@@ -35,12 +37,14 @@ def generate_configuration_model(degree_sequence, seed=None):
 
 
 def generate_rth_like(n, density, seed=None):
+    """Generate a random hyperbolic (geometric) graph at a target density."""
     rng = np.random.RandomState(seed)
 
     radii = np.arccosh(1 + rng.exponential(scale=1.0, size=n))
     angles = rng.uniform(0, 2 * np.pi, size=n)
 
     def hyperbolic_distance(r1, a1, r2, a2):
+        """Hyperbolic distance between two points in the Poincare disk."""
         delta_a = np.abs(a1 - a2)
         if delta_a > np.pi:
             delta_a = 2 * np.pi - delta_a
@@ -73,6 +77,7 @@ def generate_rth_like(n, density, seed=None):
 
 
 def _compute_null_metrics(args):
+    """Compute graph metrics for one random null graph (worker helper)."""
     G_null, metrics_to_compute = args
     result = {}
 
@@ -212,7 +217,7 @@ def null_model_analysis_all(matrices_dict, model="erdos_renyi",
             binary = data["thresholded"].get(0.15)
             if binary is None:
                 from importlib import import_module
-                conn_mod = import_module("02_connectivity")
+                conn_mod = import_module("02a_connectivity")
                 binary = conn_mod.threshold_by_density(data["raw"], 0.15)
 
             G = graph_metrics.binary_to_graph(binary)
@@ -244,6 +249,7 @@ def null_model_analysis_all(matrices_dict, model="erdos_renyi",
 
 
 def compare_null_models(G_real, n_null=100):
+    """Compare metric deviations across the available null-model families."""
     models = ["erdos_renyi", "configuration", "rth"]
     comparison = {}
 

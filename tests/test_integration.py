@@ -17,6 +17,7 @@ if str(KOD) not in sys.path:
 
 @pytest.fixture
 def synthetic_multifeature_df(rng):
+    """Synthetic multi-feature DataFrame (graph + ALFF/ReHo + multi-atlas)."""
     n = 60
     y = np.array([0]*20 + [1]*20 + [2]*20)
     rows = {
@@ -43,7 +44,8 @@ def synthetic_multifeature_df(rng):
 
 
 def test_feature_sets_include_extended(synthetic_multifeature_df):
-    ec = import_module('08_enhanced_classification')
+    """Extended feature sets (ALFF/ReHo, multi-atlas) are exposed."""
+    ec = import_module('08e_run')
     fs = ec.get_feature_sets_by_mode(synthetic_multifeature_df, 'imaging_only')
     assert 'ALFF' in fs, fs.keys()
     assert 'ReHo' in fs
@@ -59,7 +61,8 @@ def test_feature_sets_include_extended(synthetic_multifeature_df):
 
 
 def test_build_models_includes_ordinal():
-    ec = import_module('08_enhanced_classification')
+    """The model roster includes the ordinal regressors."""
+    ec = import_module('08e_run')
     if not ec.HAS_MORD:
         pytest.skip('mord yuklu degil')
     models = ec._build_models(n_feat=20, task='3class')
@@ -68,7 +71,8 @@ def test_build_models_includes_ordinal():
 
 
 def test_nbs_tangent_pipeline_cv(rng):
-    ec = import_module('08_enhanced_classification')
+    """NBS tangent pipeline cross-validates to finite scores."""
+    ec = import_module('08e_run')
     from sklearn.model_selection import cross_val_score
 
     n, T, R = 20, 30, 10
@@ -91,7 +95,8 @@ def test_nbs_tangent_pipeline_cv(rng):
 
 
 def test_twostage_with_calibration_smoke(synthetic_multifeature_df):
-    ec = import_module('08_enhanced_classification')
+    """Two-stage experiment with calibration returns a valid frame."""
+    ec = import_module('08e_run')
     df = synthetic_multifeature_df
     try:
         res = ec.experiment_twostage_by_mode(
@@ -107,8 +112,9 @@ def test_twostage_with_calibration_smoke(synthetic_multifeature_df):
 
 
 def test_build_leaderboard(tmp_path, monkeypatch):
+    """Leaderboard builder writes the expected Markdown and CSV."""
     lb = import_module('qc.build_leaderboard')
-    config = import_module('00_config')
+    config = import_module('00a_config')
 
     monkeypatch.setattr(config, 'METRICS_DIR', str(tmp_path))
     monkeypatch.setattr(lb, 'METRICS_DIR', Path(tmp_path))

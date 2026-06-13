@@ -12,7 +12,7 @@ from nilearn.connectome import ConnectivityMeasure
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 def compute_connectivity(time_series, kind=None):
@@ -101,16 +101,19 @@ class TangentSpaceTransformer(BaseEstimator, TransformerMixin):
 
     """scikit-learn transformer for CV-safe tangent-space connectivity embedding."""
     def __init__(self, vectorize=True, time_series_lookup=None):
+        """Store the transformer hyperparameters."""
         self.vectorize = vectorize
         self.time_series_lookup = time_series_lookup
 
     def _resolve_time_series(self, X):
+        """Resolve the input into a list of time-series arrays."""
         if self.time_series_lookup is not None:
             keys = list(X)
             return [self.time_series_lookup[k] for k in keys]
         return list(X)
 
     def fit(self, X, y=None):
+        """Fit the tangent reference on the training fold only (CV-safe)."""
         ts_list = self._resolve_time_series(X)
         if not ts_list:
             raise ValueError("TangentSpaceTransformer.fit: X bos.")
@@ -124,6 +127,7 @@ class TangentSpaceTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        """Project the inputs into the fitted tangent space."""
         if not hasattr(self, 'measure_'):
             raise RuntimeError(
                 "TangentSpaceTransformer fit edilmedi. Once .fit(X_train) "
@@ -133,6 +137,7 @@ class TangentSpaceTransformer(BaseEstimator, TransformerMixin):
         return self.measure_.transform(ts_list)
 
     def fit_transform(self, X, y=None, **fit_params):
+        """Fit on the training fold and return its tangent-space embedding."""
         ts_list = self._resolve_time_series(X)
         if not ts_list:
             raise ValueError("TangentSpaceTransformer.fit_transform: X bos.")
@@ -262,7 +267,9 @@ def threshold_sensitivity_analysis(matrix, subject_id="sample"):
 
     plt.suptitle(f"Seuillage Duyarlilik Analizi -- {subject_id}", fontsize=13)
     plt.tight_layout()
-    plt.savefig(os.path.join(config.FIGURES_DIR, f"threshold_sensitivity_{subject_id}.png"), dpi=150)
+    out_path = os.path.join(config.FIGURES_DIR,
+                            f"threshold_sensitivity_{subject_id}.png")
+    plt.savefig(out_path, dpi=150)
     plt.close()
 
     return df

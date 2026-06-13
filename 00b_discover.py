@@ -1,4 +1,4 @@
-"""Discover available subjects on disk and update the in-memory subject lists in the config module."""
+"""Discover subjects on disk and refresh the in-memory config subject lists."""
 
 import os
 import re
@@ -8,7 +8,7 @@ import glob
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 RSFMRI_PATTERNS = ["rsfmri", "fcmri"]
@@ -32,6 +32,7 @@ GROUP_REMAP = {
 
 
 def scan_adni_directory(adni_dir=None):
+    """Scan one ADNI subject directory and return its rsfMRI scan metadata."""
     if adni_dir is None:
         adni_dir = config.DICOM_DIR
 
@@ -48,6 +49,7 @@ def scan_adni_directory(adni_dir=None):
 
 
 def scan_all_adni_directories():
+    """Scan every ADNI subject directory under the data root."""
     subject_to_dir = {}
     for adni_dir in ADNI_SEARCH_DIRS:
         if not os.path.isdir(adni_dir):
@@ -59,6 +61,7 @@ def scan_all_adni_directories():
 
 
 def load_labels_from_csv():
+    """Load HC/MCI/AD diagnosis labels from the ADNI CSV tables."""
     try:
         import pandas as pd
     except ImportError:
@@ -85,6 +88,7 @@ def load_labels_from_csv():
 
 
 def detect_protocol(subject_id, adni_dir=None):
+    """Infer the acquisition protocol (Standard vs Multiband) from a series name."""
     if adni_dir is None:
         adni_dir = config.DICOM_DIR
 
@@ -171,6 +175,7 @@ def detect_protocol(subject_id, adni_dir=None):
 
 
 def discover_all(adni_dir=None):
+    """Discover every subject, protocol and label from disk and the CSV tables."""
     if adni_dir is not None:
         subject_to_dir = {
             s: adni_dir for s in scan_adni_directory(adni_dir)
@@ -208,7 +213,7 @@ def discover_all(adni_dir=None):
     missing = [s for s in all_valid if s not in labels]
     if missing:
         try:
-            adni_data = import_module("00b_adni_data")
+            adni_data = import_module("00d_adni_data")
             dxsum_df  = adni_data.load_diagnosis()
             for sid in missing:
                 dx = adni_data.get_subject_diagnosis(dxsum_df, sid)
@@ -230,6 +235,7 @@ def discover_all(adni_dir=None):
 
 
 def update_config(discovery_result=None):
+    """Update the in-memory config subject lists with the discovered subjects."""
     if discovery_result is None:
         discovery_result = discover_all()
 
@@ -246,6 +252,7 @@ def update_config(discovery_result=None):
 
 
 def build_subjects_list(discovery_result=None):
+    """Build the list of subject dicts (id, path, group, protocol)."""
     if discovery_result is None:
         discovery_result = discover_all()
 
@@ -276,6 +283,7 @@ def build_subjects_list(discovery_result=None):
 
 
 def run(adni_dir=None, verbose=True):
+    """Run discovery end to end; optionally print a summary. Returns the result dict."""
     result = discover_all(adni_dir)
     update_config(result)
 

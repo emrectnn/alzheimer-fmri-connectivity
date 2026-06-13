@@ -111,9 +111,12 @@ def print_summary(stats_df):
             star = "***" if row["p_adjusted"] < 0.001 else (
                 "**" if row["p_adjusted"] < 0.01 else "*")
             print(f"\n  {row['metric']} ({row['pair']}) {star}")
-            print(f"    p_adj = {row['p_adjusted']:.4f}, Cohen's d = {row['cohens_d']:.3f} ({row['effect_size']})")
-            print(f"    {row['pair'].split(' vs ')[0]}: {row['g1_mean']:.4f} ± {row['g1_std']:.4f}")
-            print(f"    {row['pair'].split(' vs ')[1]}: {row['g2_mean']:.4f} ± {row['g2_std']:.4f}")
+            print(f"    p_adj = {row['p_adjusted']:.4f}, "
+                  f"Cohen's d = {row['cohens_d']:.3f} ({row['effect_size']})")
+            print(f"    {row['pair'].split(' vs ')[0]}: "
+                  f"{row['g1_mean']:.4f} ± {row['g1_std']:.4f}")
+            print(f"    {row['pair'].split(' vs ')[1]}: "
+                  f"{row['g2_mean']:.4f} ± {row['g2_std']:.4f}")
 
     print("\n--- Tablo 5.1 Kriter Kontrolu ---")
     hc_ad = stats_df[stats_df["pair"] == "HC vs AD"]

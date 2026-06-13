@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 def build_feature_matrix(global_metrics_df, nodal_metrics_list,
@@ -182,8 +182,10 @@ def cross_validate_all(X, y, n_splits=None):
             auc_key = "test_roc_auc_ovr" if "test_roc_auc_ovr" in scores else "test_roc_auc"
 
             results[name] = {
-                "acc_test": f"{scores['test_accuracy'].mean():.3f} ± {scores['test_accuracy'].std():.3f}",
-                "f1_test": f"{scores['test_f1_macro'].mean():.3f} ± {scores['test_f1_macro'].std():.3f}",
+                "acc_test": (f"{scores['test_accuracy'].mean():.3f} ± "
+                             f"{scores['test_accuracy'].std():.3f}"),
+                "f1_test": (f"{scores['test_f1_macro'].mean():.3f} ± "
+                            f"{scores['test_f1_macro'].std():.3f}"),
                 "auc_test": f"{scores[auc_key].mean():.3f} ± {scores[auc_key].std():.3f}",
                 "acc_train": f"{scores['train_accuracy'].mean():.3f}",
                 "raw_scores": scores,
@@ -198,6 +200,7 @@ def cross_validate_all(X, y, n_splits=None):
 
 
 def feature_importance_analysis(X, y, feature_names, top_n=20):
+    """Rank features by a random-forest importance estimate."""
     rf = RandomForestClassifier(
         n_estimators=500, random_state=config.RANDOM_STATE
     )

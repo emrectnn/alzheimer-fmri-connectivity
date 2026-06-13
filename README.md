@@ -30,14 +30,14 @@ DICOM  ──►  NIfTI  ──►  ROI zaman serileri  ──►  bağlantı ma
 
 1. **Ön işleme** (`01_preprocess.py`) — 24-parametreli Friston konfound
    regresyonu, FD/DVARS hareket QC, atlas tabanlı ROI zaman serisi çıkarımı.
-2. **Bağlantı** (`02_connectivity.py`) — Pearson korelasyonu, Fisher z, yoğunluk
+2. **Bağlantı** (`02a_connectivity.py`) — Pearson korelasyonu, Fisher z, yoğunluk
    eşikleme, tangent-space embedding.
 3. **Graf metrikleri** (`03_graph_metrics.py`) — global + nodal metrikler,
    yoğunluk ekseninde AUC stratejisi.
 4. **Null model** (`04_null_models.py`) — Erdős–Rényi rastgele ağlara karşı
    sapma skorları.
 5. **İstatistik & sınıflandırma** (`07_statistics.py`,
-   `08_enhanced_classification.py`) — grup karşılaştırmaları, ComBat
+   `08a`–`08e_*.py`) — grup karşılaştırmaları, ComBat
    harmonizasyon, tekrarlı çapraz doğrulama, Optuna ile hiperparametre
    optimizasyonu.
 
@@ -66,40 +66,51 @@ DICOM  ──►  NIfTI  ──►  ROI time series  ──►  connectivity mat
 
 1. **Preprocessing** (`01_preprocess.py`) — 24-parameter Friston confound
    regression, FD/DVARS motion QC, atlas-based ROI time-series extraction.
-2. **Connectivity** (`02_connectivity.py`) — Pearson correlation, Fisher z,
+2. **Connectivity** (`02a_connectivity.py`) — Pearson correlation, Fisher z,
    density thresholding, tangent-space embedding.
 3. **Graph metrics** (`03_graph_metrics.py`) — global and nodal metrics with the
    AUC-over-density strategy.
 4. **Null models** (`04_null_models.py`) — deviation scores against
    Erdős–Rényi random networks.
 5. **Statistics & classification** (`07_statistics.py`,
-   `08_enhanced_classification.py`) — group comparisons, ComBat harmonization,
+   `08a`–`08e_*.py`) — group comparisons, ComBat harmonization,
    repeated cross-validation, Optuna hyperparameter tuning.
 
 ---
 
 ## Project structure
 
+Files are numbered by pipeline stage. When a stage spans several files they
+share the number and are lettered in execution order (e.g. `02a`, `02b`, `02c`).
+
 ```
 .
-├─ 00_config.py            # paths, atlas settings, constants
-├─ 00_discover.py          # dynamic subject discovery
-├─ 00a_dicom2nifti.py      # DICOM -> NIfTI conversion
-├─ 00b_adni_data.py        # metadata matching, subject list
+├─ 00a_config.py           # paths, atlas settings, constants
+├─ 00b_discover.py         # dynamic subject discovery
+├─ 00c_dicom2nifti.py      # DICOM -> NIfTI conversion
+├─ 00d_adni_data.py        # metadata matching, subject list
 ├─ 01_preprocess.py        # preprocessing + motion QC
-├─ 02_connectivity.py      # connectivity + tangent embedding
-├─ 02c_alff_reho.py        # ALFF / fALFF / ReHo features
-├─ 02d_multiatlas.py       # multi-atlas pipeline
+├─ 02a_connectivity.py     # connectivity + tangent embedding
+├─ 02b_alff_reho.py        # ALFF / fALFF / ReHo features
+├─ 02c_multiatlas.py       # multi-atlas pipeline
 ├─ 03_graph_metrics.py     # graph-theoretic metrics
 ├─ 04_null_models.py       # null-model deviation features
-├─ 06_classification.py    # baseline classification
+├─ 06a_classification.py   # baseline classification
 ├─ 06b_nbs.py              # network-based statistic
 ├─ 07_statistics.py        # group statistics
-├─ 08_enhanced_classification.py  # full classification sweep
-├─ main.py                 # pipeline entry point
-├─ qc/                     # quality-control utilities
+├─ 08a_features.py         # classification: feature sets
+├─ 08b_transformers.py     # classification: transformers & pipelines
+├─ 08c_models.py           # classification: model roster & Optuna tuning
+├─ 08d_experiments.py      # classification: per-task experiments
+├─ 08e_run.py              # classification: sweep entry point & leaderboard
+├─ main.py                 # full-pipeline entry point
+├─ run.py                  # discover + run convenience launcher
+├─ qc/                     # quality-control & reporting utilities
+│  ├─ build_leaderboard.py
+│  └─ permutation_test.py
 ├─ tests/                  # pytest suite (synthetic fixtures)
-└─ requirements.txt
+├─ requirements.txt
+└─ LICENSE
 ```
 
 ## Installation

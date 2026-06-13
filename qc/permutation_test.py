@@ -14,8 +14,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "kod"))
 
-config = import_module("00_config")
-ec = import_module("08_enhanced_classification")
+config = import_module("00a_config")
+ec = import_module("08e_run")
 
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score
 
@@ -27,6 +27,7 @@ UNSUPPORTED_MODEL_NAMES = ('TwoStage_LGBM', 'TwoStage_SVM')
 
 
 def is_row_supported(row: pd.Series) -> bool:
+    """Whether a leaderboard row can be rebuilt for permutation testing."""
     task = str(row.get('Task', ''))
     feat = str(row.get('Best_Features', ''))
     model = str(row.get('Best_Model', ''))
@@ -44,6 +45,7 @@ def is_row_supported(row: pd.Series) -> bool:
 
 def pick_supported_topk(task: str, mode: str, residualize: bool,
                         sweep_dir: Path) -> pd.Series | None:
+    """Pick the best supported (feature, model) from the sweep as a fallback."""
     fallback_task = '3class' if task == '3class_twostage' else task
     resid_slug = 'resid' if residualize else 'raw'
     fname = f"task-{fallback_task}__{mode}__{resid_slug}__fixed.csv"
@@ -72,6 +74,7 @@ def pick_supported_topk(task: str, mode: str, residualize: bool,
 def run_permutation_for_row(row: pd.Series, df: pd.DataFrame,
                             n_iter: int, n_repeats: int,
                             random_state: int = 42) -> dict:
+    """Run the full permutation test for one leaderboard row."""
     task = row['Task']
     mode = row['Mode']
     feat_name = row['Best_Features']
@@ -148,6 +151,7 @@ def run_permutation_for_row(row: pd.Series, df: pd.DataFrame,
 
 
 def main() -> int:
+    """Run permutation tests for the selected rows and write the p-values CSV."""
     ap = argparse.ArgumentParser()
     ap.add_argument('--n-iter', type=int, default=config.PERM_N_ITER)
     ap.add_argument('--n-repeats', type=int, default=config.PERM_N_REPEATS_FOR_CV)

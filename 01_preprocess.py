@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from importlib import import_module
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 def load_atlas(atlas_name=None):
@@ -346,7 +346,7 @@ def preprocess_all(subjects, save_dir=None, skip_existing=True):
 
 if __name__ == "__main__":
     from importlib import import_module
-    adni_data = import_module("00b_adni_data")
+    adni_data = import_module("00d_adni_data")
 
     subjects = adni_data.prepare_subjects()
 

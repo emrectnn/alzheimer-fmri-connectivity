@@ -1,4 +1,4 @@
-"""Amplitude of low-frequency fluctuation (ALFF/fALFF) and regional homogeneity (ReHo) features per ROI."""
+"""Per-ROI ALFF/fALFF (low-frequency amplitude) and ReHo (regional homogeneity)."""
 
 from __future__ import annotations
 
@@ -14,11 +14,12 @@ from scipy.stats import rankdata
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "kod"))
 
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 def compute_alff_falff(ts: np.ndarray, tr: float,
                        band: tuple[float, float] = (0.01, 0.08)) -> tuple[np.ndarray, np.ndarray]:
+    """Per-ROI ALFF (low-frequency amplitude) and fALFF (its fraction of total power)."""
     T, n_roi = ts.shape
     fs = 1.0 / tr
     nperseg = min(T, 64)
@@ -41,6 +42,7 @@ def compute_alff_falff(ts: np.ndarray, tr: float,
 
 
 def kendalls_w(data: np.ndarray) -> float:
+    """Kendall's W coefficient of concordance for a (raters x items) matrix."""
     n_raters, n_items = data.shape
     if n_raters < 2 or n_items < 2:
         return 0.0
@@ -55,6 +57,7 @@ def kendalls_w(data: np.ndarray) -> float:
 
 
 def compute_reho_roi(ts: np.ndarray, k_neighbors: int = 6) -> np.ndarray:
+    """ROI-level ReHo: concordance of each ROI with its k most-correlated neighbours."""
     T, n_roi = ts.shape
     ts_z = (ts - ts.mean(axis=0, keepdims=True)) / (ts.std(axis=0, keepdims=True) + 1e-8)
     fc = np.corrcoef(ts_z.T)
@@ -68,6 +71,7 @@ def compute_reho_roi(ts: np.ndarray, k_neighbors: int = 6) -> np.ndarray:
 
 
 def load_timeseries(sid: str) -> np.ndarray | None:
+    """Load a subject's preprocessed ROI time series, oriented as (time, ROI)."""
     p = Path(config.PREPROCESSED_DIR) / f"{sid}_timeseries.npy"
     if not p.exists():
         return None
@@ -81,6 +85,7 @@ def load_timeseries(sid: str) -> np.ndarray | None:
 
 
 def main(atlas_name: str = 'AAL3', skip_existing: bool = True) -> int:
+    """Compute ALFF/fALFF/ReHo for every subject and write the result CSVs."""
     metadata_csv = Path(config.NIFTI_DIR) / "subject_metadata.csv"
     if not metadata_csv.exists():
         print(f"[ERR] {metadata_csv} yok")
@@ -140,6 +145,7 @@ def main(atlas_name: str = 'AAL3', skip_existing: bool = True) -> int:
         print("[ERR] hicbir denek islenemedi")
         return 1
     def _pad(rows, max_len):
+        """Right-pad rows with NaN so every row has the same column count."""
         padded = []
         for r in rows:
             if len(r) < max_len:

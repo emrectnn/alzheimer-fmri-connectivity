@@ -10,7 +10,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "kod"))
-config = import_module("00_config")
+config = import_module("00a_config")
 
 
 METRICS_DIR = Path(config.METRICS_DIR)
@@ -18,6 +18,7 @@ SWEEP_DIR = METRICS_DIR / "sweep"
 
 
 def _load_all_sweep_csvs() -> pd.DataFrame:
+    """Concatenate every sweep CSV into one DataFrame."""
     if not SWEEP_DIR.exists():
         return pd.DataFrame()
     frames = []
@@ -34,12 +35,14 @@ def _load_all_sweep_csvs() -> pd.DataFrame:
 
 
 def _safe_str_task(t) -> str:
+    """Normalize a task label to text ('A-B' for a pair tuple)."""
     if isinstance(t, tuple):
         return f"{t[0]}-{t[1]}"
     return str(t)
 
 
 def build_headline(sweep_df: pd.DataFrame) -> pd.DataFrame:
+    """Best-AUC row per (task, mode)."""
     if sweep_df.empty:
         return pd.DataFrame()
     cols_req = ['Task', 'Mode', 'Features', 'Model', 'AUC']
@@ -58,6 +61,7 @@ def build_headline(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_alff_reho_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
+    """ALFF/ReHo ablation table: base graph vs augmented feature sets."""
     if sweep_df.empty or 'Features' not in sweep_df.columns:
         return pd.DataFrame()
     targets = ['Graf_Tam', 'Graf_Tam+ALFF', 'Graf_Tam+ReHo', 'Graf_Tam+ALFF+ReHo',
@@ -74,6 +78,7 @@ def build_alff_reho_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_nbs_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
+    """Tangent_FC vs NBS_Edges comparison table."""
     if sweep_df.empty:
         return pd.DataFrame()
     d = sweep_df[sweep_df['Features'].isin(['Tangent_FC', 'NBS_Edges'])].copy()
@@ -90,6 +95,7 @@ def build_nbs_ablation(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_twostage_comparison(sweep_df: pd.DataFrame) -> pd.DataFrame:
+    """Flat vs two-stage 3-class AUC comparison."""
     if sweep_df.empty:
         return pd.DataFrame()
     d = sweep_df[sweep_df['Task'].isin(['3class', '3class_twostage'])].copy()
@@ -105,6 +111,7 @@ def build_twostage_comparison(sweep_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def load_optional(path: Path) -> pd.DataFrame | None:
+    """Read a CSV if present, else return None."""
     if path.exists():
         try:
             return pd.read_csv(path)
@@ -114,6 +121,7 @@ def load_optional(path: Path) -> pd.DataFrame | None:
 
 
 def df_to_md(df: pd.DataFrame, float_fmt: str = '.3f') -> str:
+    """Render a DataFrame as Markdown ('(no data)' if empty)."""
     if df is None or df.empty:
         return "_(veri yok)_\n"
     try:
@@ -123,6 +131,7 @@ def df_to_md(df: pd.DataFrame, float_fmt: str = '.3f') -> str:
 
 
 def main() -> int:
+    """Build every table and write leaderboard_final.md plus the headline CSV."""
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     sweep = _load_all_sweep_csvs()
     if sweep.empty:

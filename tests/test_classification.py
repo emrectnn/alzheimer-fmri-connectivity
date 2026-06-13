@@ -5,7 +5,8 @@ from importlib import import_module
 
 
 def test_make_imb_pipeline_has_scaler_and_smote():
-    clf_mod = import_module("08_enhanced_classification")
+    """Pipeline contains imputer, scaler, selector and SMOTE in the right order."""
+    clf_mod = import_module("08e_run")
     from sklearn.linear_model import LogisticRegression
     pipe = clf_mod.make_imb_pipeline(LogisticRegression(max_iter=500),
                                      k_best=5, use_smote=True)
@@ -23,6 +24,7 @@ def test_make_imb_pipeline_has_scaler_and_smote():
 
 
 def test_no_leakage_scaler_fit_called_per_fold(monkeypatch):
+    """Scaler is fit once per fold (no whole-dataset leakage)."""
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.linear_model import LogisticRegression
@@ -32,6 +34,7 @@ def test_no_leakage_scaler_fit_called_per_fold(monkeypatch):
     call_count = {"n": 0}
 
     def counting_fit(self, X, y=None):
+        """Test stub: count calls then delegate to the original fit."""
         call_count["n"] += 1
         return original_fit(self, X, y)
 
@@ -53,7 +56,8 @@ def test_no_leakage_scaler_fit_called_per_fold(monkeypatch):
 
 
 def test_get_feature_sets_by_mode_no_clinical_leak(synthetic_feature_df):
-    clf_mod = import_module("08_enhanced_classification")
+    """imaging_only mode excludes demographic and clinical columns."""
+    clf_mod = import_module("08e_run")
     df = synthetic_feature_df.copy()
     df["mmse"] = 28.0
     df["cdrsb"] = 0.5
@@ -85,18 +89,20 @@ def test_get_feature_sets_by_mode_no_clinical_leak(synthetic_feature_df):
 
 
 def test_confound_regressor_leakage(monkeypatch):
+    """Confound regressor is fit once per fold (no leakage)."""
     import numpy as np
     from importlib import import_module
     from sklearn.linear_model import LinearRegression
     from sklearn.model_selection import StratifiedKFold, cross_validate
     from sklearn.linear_model import LogisticRegression
 
-    clf_mod = import_module("08_enhanced_classification")
+    clf_mod = import_module("08e_run")
 
     original_fit = LinearRegression.fit
     counter = {"n": 0}
 
     def counting_fit(self, X, y=None, **kw):
+        """Test stub: count calls then delegate to the original fit."""
         counter["n"] += 1
         return original_fit(self, X, y)
 
@@ -124,8 +130,9 @@ def test_confound_regressor_leakage(monkeypatch):
 
 
 def test_experiment_binary_by_mode_smoke(synthetic_feature_df):
+    """Binary experiment returns a non-empty result with the expected columns."""
     from importlib import import_module
-    clf_mod = import_module("08_enhanced_classification")
+    clf_mod = import_module("08e_run")
     df = synthetic_feature_df.copy()
     df["age"] = 70.0
     df["gender_bin"] = 1.0
@@ -143,12 +150,13 @@ def test_experiment_binary_by_mode_smoke(synthetic_feature_df):
 
 
 def test_tangent_pipeline_cv_safe(rng):
+    """Tangent pipeline cross-validates without leakage and yields finite scores."""
     import numpy as np
     from importlib import import_module
     from sklearn.model_selection import StratifiedKFold, cross_val_score
     from sklearn.linear_model import LogisticRegression
 
-    clf_mod = import_module("08_enhanced_classification")
+    clf_mod = import_module("08e_run")
 
     n_subj, n_tr, n_roi = 10, 50, 10
     ts_lookup = {}
@@ -177,11 +185,12 @@ def test_tangent_pipeline_cv_safe(rng):
 
 
 def test_repeated_kfold_fit_count():
+    """Repeated k-fold performs the expected number of model fits."""
     import numpy as np
     from importlib import import_module
     from sklearn.linear_model import LogisticRegression
 
-    clf_mod = import_module("08_enhanced_classification")
+    clf_mod = import_module("08e_run")
     rng = np.random.default_rng(0)
     n, p = 40, 8
     X = rng.standard_normal((n, p))
@@ -191,6 +200,7 @@ def test_repeated_kfold_fit_count():
     orig_fit = LogisticRegression.fit
 
     def counting_fit(self, X, y, sample_weight=None):
+        """Test stub: count calls then delegate to the original fit."""
         counter["n"] += 1
         return orig_fit(self, X, y, sample_weight=sample_weight)
 
@@ -206,11 +216,12 @@ def test_repeated_kfold_fit_count():
 
 
 def test_combat_transformer_cv_safe():
+    """ComBat is learned once per training fold (no leakage)."""
     import numpy as np
     import pytest
     from importlib import import_module
 
-    clf_mod = import_module("08_enhanced_classification")
+    clf_mod = import_module("08b_transformers")
     if not getattr(clf_mod, "HAS_NH", False):
         pytest.skip("neuroHarmonize yuklu degil — test atlaniyor.")
 
@@ -225,6 +236,7 @@ def test_combat_transformer_cv_safe():
     orig_learn = clf_mod.harmonizationLearn
 
     def counting_learn(features, covars, **kwargs):
+        """Test stub: count calls then delegate to the original learner."""
         counter["n"] += 1
         return orig_learn(features, covars, **kwargs)
 
@@ -245,11 +257,12 @@ def test_combat_transformer_cv_safe():
 
 
 def test_optuna_objective_smoke():
+    """Optuna model builder returns at least one tuned model."""
     import numpy as np
     import pytest
     from importlib import import_module
 
-    clf_mod = import_module("08_enhanced_classification")
+    clf_mod = import_module("08e_run")
     if not getattr(clf_mod, "HAS_OPTUNA", False):
         pytest.skip("Optuna yuklu degil — test atlaniyor.")
     if not getattr(clf_mod, "HAS_LGBM", False):

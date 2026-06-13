@@ -15,7 +15,8 @@ if str(KOD) not in sys.path:
 
 
 def test_alff_falff_shape(rng):
-    ar = import_module('02c_alff_reho')
+    """ALFF/fALFF have the right shape and valid ranges."""
+    ar = import_module('02b_alff_reho')
     T, n_roi = 150, 20
     ts = rng.standard_normal((T, n_roi))
     alff, falff = ar.compute_alff_falff(ts, tr=3.0, band=(0.01, 0.08))
@@ -27,7 +28,8 @@ def test_alff_falff_shape(rng):
 
 
 def test_reho_roi_shape(rng):
-    ar = import_module('02c_alff_reho')
+    """ROI-level ReHo has the right shape and valid range."""
+    ar = import_module('02b_alff_reho')
     T, n_roi = 120, 15
     ts = rng.standard_normal((T, n_roi))
     reho = ar.compute_reho_roi(ts, k_neighbors=4)
@@ -37,6 +39,7 @@ def test_reho_roi_shape(rng):
 
 
 def test_nbs_edge_selector_cv_safe(rng):
+    """NBS edge selector returns a valid boolean support mask."""
     nbs = import_module('06b_nbs')
     n_subj, n_roi = 30, 15
     n_edges = n_roi * (n_roi - 1) // 2
@@ -55,7 +58,8 @@ def test_nbs_edge_selector_cv_safe(rng):
 
 
 def test_ordinal_regression_smoke(synthetic_feature_df):
-    ec = import_module('08_enhanced_classification')
+    """Ordinal model trains and predicts valid 3-class labels."""
+    ec = import_module('08e_run')
     if not ec.HAS_MORD:
         pytest.skip('mord yuklu degil')
     df = synthetic_feature_df
@@ -71,7 +75,8 @@ def test_ordinal_regression_smoke(synthetic_feature_df):
 
 
 def test_cv_score_per_class_keys(synthetic_feature_df):
-    ec = import_module('08_enhanced_classification')
+    """cv_score returns AUC/accuracy, per-class recalls and a confusion matrix."""
+    ec = import_module('08e_run')
     from sklearn.linear_model import LogisticRegression
     df = synthetic_feature_df
     X = df[[c for c in df.columns if c.startswith('feat_')]].values

@@ -9,7 +9,7 @@ sys.path.insert(0, KOD_DIR)
 from importlib import import_module
 
 print("Dinamik ozne kesfi basliyor...")
-discover = import_module("00_discover")
+discover = import_module("00b_discover")
 result   = discover.run(verbose=True)
 
 if not result["all_valid"]:
