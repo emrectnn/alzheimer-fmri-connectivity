@@ -19,7 +19,7 @@ Optuna ile ayarlanan bir sınıflandırma taraması birleştirilir.
 - [Pipeline (genel akış)](#pipeline-genel-akış)
 - [Yöntem (ne, neden, nasıl)](#yöntem)
 - [Kod yapısı](#kod-yapısı)
-- [Modüller — her dosya ne yapıyor?](#modüller--her-dosya-ne-yapıyor)
+- [Modüller](#modüller)
 - [Kurulum](#kurulum)
 - [Kullanım](#kullanım)
 - [Testler](#testler)

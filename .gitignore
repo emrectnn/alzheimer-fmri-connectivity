@@ -11,8 +11,9 @@ __pycache__/
 venv/
 env/
 
-# Data and outputs (not redistributed)
-data/
+# Data and outputs (not redistributed) — keep only the explanatory README
+data/*
+!data/README.md
 veri/
 results/
 *.npy
